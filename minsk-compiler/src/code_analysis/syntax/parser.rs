@@ -1,9 +1,11 @@
+use unary_expression_syntax::UnaryExpressionSyntax;
+
 use super::{
     binary_expression_syntax::BinaryExpressionSyntax, expression_syntax::ExpressionSyntax,
     lexer::Lexer, literal_expression_syntax::LiteralExpressionSyntax,
     parenthesized_expression_syntax::ParenthesizedExpressionSyntax, syntax_facts::SyntaxFacts,
     syntax_kind::SyntaxKind, syntax_node::SyntaxNode, syntax_token::SyntaxToken,
-    syntax_tree::SyntaxTree,
+    syntax_tree::SyntaxTree, unary_expression_syntax,
 };
 
 pub(crate) struct Parser {
@@ -82,7 +84,19 @@ impl Parser {
     }
 
     fn parse_expression(&mut self, parent_precedence: usize) -> ExpressionSyntax {
-        let mut left = self.parse_primary_expression();
+        let unary_operator_precedence = self.current().kind.unary_operator_precedence();
+        let mut left =
+            if unary_operator_precedence != 0 && unary_operator_precedence >= parent_precedence {
+                let operator_token = self.next_token();
+                let operand = self.parse_expression(unary_operator_precedence);
+                ExpressionSyntax::UnaryExpressionSyntax(UnaryExpressionSyntax {
+                    operator_token,
+                    operand: Box::new(operand),
+                })
+            } else {
+                self.parse_primary_expression()
+            };
+
         loop {
             let precedence = self.current().kind.binary_operator_precedence();
             if precedence == 0 || precedence <= parent_precedence {

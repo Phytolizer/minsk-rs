@@ -15,6 +15,14 @@ impl Evaluator {
                 let MinskValue::Integer(i) = lit.literal_token.value.as_ref().unwrap();
                 *i
             }
+            ExpressionSyntax::UnaryExpressionSyntax(u) => {
+                let operand = Self::evaluate_expression(&u.operand);
+                match u.operator_token.kind {
+                    SyntaxKind::Plus => operand,
+                    SyntaxKind::Minus => -operand,
+                    _ => panic!("Unexpected unary operator {}", u.operator_token.kind),
+                }
+            }
             ExpressionSyntax::BinaryExpressionSyntax(b) => {
                 let left = Self::evaluate_expression(&b.left);
                 let right = Self::evaluate_expression(&b.right);

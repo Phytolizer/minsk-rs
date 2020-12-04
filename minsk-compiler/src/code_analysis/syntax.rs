@@ -9,3 +9,4 @@ pub(crate) mod syntax_kind;
 pub(crate) mod syntax_node;
 mod syntax_token;
 mod syntax_tree;
+mod unary_expression_syntax;
