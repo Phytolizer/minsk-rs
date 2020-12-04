@@ -139,7 +139,7 @@ impl<'compilation> Binder<'compilation> {
         let name = syntax.identifier_token.text.clone();
         let bound = self.bind_expression(&syntax.expression);
 
-        let existing_variable = self.variables.keys().find(|k| &k.name == &name).cloned();
+        let existing_variable = self.variables.keys().find(|k| k.name == name).cloned();
         if let Some(existing_variable) = existing_variable {
             self.variables.remove(&existing_variable);
         }
