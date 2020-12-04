@@ -70,7 +70,7 @@ impl Binder {
         } else {
             self.diagnostics.push(format!(
                 "Unary operator '{}' is not defined for type {}",
-                syntax.operator_token.kind,
+                syntax.operator_token.text,
                 operand.kind()
             ));
             operand
@@ -91,7 +91,7 @@ impl Binder {
         } else {
             self.diagnostics.push(format!(
                 "Binary operator '{}' is not defined for types {} and {}",
-                syntax.operator_token.kind,
+                syntax.operator_token.text,
                 left.kind(),
                 right.kind()
             ));

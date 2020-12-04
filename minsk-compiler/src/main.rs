@@ -54,9 +54,9 @@ fn main() -> anyhow::Result<()> {
         if show_tree {
             println!("{}", tree.root());
         }
-        if tree.diagnostics().len() > 0 {
+        if diagnostics.len() > 0 {
             stdout.execute(SetForegroundColor(Color::DarkRed))?;
-            for diagnostic in tree.diagnostics() {
+            for diagnostic in diagnostics {
                 println!("{}", diagnostic);
             }
             stdout.execute(ResetColor)?;
