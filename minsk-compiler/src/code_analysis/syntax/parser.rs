@@ -1,9 +1,11 @@
 use unary_expression_syntax::UnaryExpressionSyntax;
 
+use crate::minsk_value::MinskValue;
+
 use super::{
     binary_expression_syntax::BinaryExpressionSyntax, expression_syntax::ExpressionSyntax,
     lexer::Lexer, literal_expression_syntax::LiteralExpressionSyntax,
-    parenthesized_expression_syntax::ParenthesizedExpressionSyntax, syntax_facts::SyntaxFacts,
+    parenthesized_expression_syntax::ParenthesizedExpressionSyntax, syntax_facts::SyntaxFactsExt,
     syntax_kind::SyntaxKind, syntax_node::SyntaxNode, syntax_token::SyntaxToken,
     syntax_tree::SyntaxTree, unary_expression_syntax,
 };
@@ -116,20 +118,34 @@ impl Parser {
     }
 
     fn parse_primary_expression(&mut self) -> ExpressionSyntax {
-        if self.current().kind == SyntaxKind::OpenParenthesis {
-            let open_parenthesis_token = self.next_token();
-            let expression = self.parse_expression(0);
-            let close_parenthesis_token = self.match_token(SyntaxKind::CloseParenthesis);
-            return ExpressionSyntax::ParenthesizedExpressionSyntax(
-                ParenthesizedExpressionSyntax {
+        match self.current().kind {
+            SyntaxKind::OpenParenthesis => {
+                let open_parenthesis_token = self.next_token();
+                let expression = self.parse_expression(0);
+                let close_parenthesis_token = self.match_token(SyntaxKind::CloseParenthesis);
+                ExpressionSyntax::ParenthesizedExpressionSyntax(ParenthesizedExpressionSyntax {
                     open_parenthesis_token,
                     expression: Box::new(expression),
                     close_parenthesis_token,
-                },
-            );
+                })
+            }
+            SyntaxKind::TrueKeyword | SyntaxKind::FalseKeyword => {
+                let keyword_token = self.next_token();
+                let value = Some(MinskValue::Boolean(
+                    keyword_token.kind == SyntaxKind::TrueKeyword,
+                ));
+                ExpressionSyntax::LiteralExpressionSyntax(LiteralExpressionSyntax {
+                    literal_token: keyword_token,
+                    value,
+                })
+            }
+            _ => {
+                let literal_token = self.match_token(SyntaxKind::Number);
+                ExpressionSyntax::LiteralExpressionSyntax(LiteralExpressionSyntax::new(
+                    literal_token,
+                ))
+            }
         }
-        let literal_token = self.match_token(SyntaxKind::Number);
-        ExpressionSyntax::LiteralExpressionSyntax(LiteralExpressionSyntax { literal_token })
     }
 
     pub(super) fn diagnostics(self) -> Vec<String> {

@@ -1,6 +1,10 @@
 use crate::minsk_value::MinskValue;
 
-use super::{syntax_kind::SyntaxKind, syntax_token::SyntaxToken};
+use super::{
+    syntax_facts::{SyntaxFacts, SyntaxFactsExt},
+    syntax_kind::SyntaxKind,
+    syntax_token::SyntaxToken,
+};
 
 pub(super) struct Lexer {
     text: String,
@@ -59,7 +63,7 @@ impl Lexer {
                     value,
                 }
             }
-            d if d.is_whitespace() => {
+            w if w.is_whitespace() => {
                 let start = self.position;
                 while self.current().is_whitespace() {
                     self.next();
@@ -67,6 +71,20 @@ impl Lexer {
                 let text = &self.text[start..self.position];
                 SyntaxToken {
                     kind: SyntaxKind::Whitespace,
+                    position: start,
+                    text: text.to_string(),
+                    value: None,
+                }
+            }
+            l if l.is_alphabetic() => {
+                let start = self.position;
+                while self.current().is_alphabetic() {
+                    self.next();
+                }
+                let text = &self.text[start..self.position];
+                let kind = SyntaxFacts::keyword_kind(text);
+                SyntaxToken {
+                    kind,
                     position: start,
                     text: text.to_string(),
                     value: None,

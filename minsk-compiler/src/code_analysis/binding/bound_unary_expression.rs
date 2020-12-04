@@ -1,3 +1,5 @@
+use crate::minsk_type::MinskType;
+
 use super::{bound_expression::BoundExpression, bound_unary_operator_kind::BoundUnaryOperatorKind};
 
 #[derive(Debug)]
@@ -7,7 +9,7 @@ pub(crate) struct BoundUnaryExpression {
 }
 
 impl BoundUnaryExpression {
-    pub(super) fn kind(&self) -> super::minsk_type::MinskType {
+    pub(super) fn kind(&self) -> MinskType {
         self.operand.kind()
     }
 }

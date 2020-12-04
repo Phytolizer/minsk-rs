@@ -8,6 +8,7 @@ pub(crate) enum SyntaxKind {
 
     Whitespace,
     Number,
+    Identifier,
 
     Plus,
     Minus,
@@ -16,6 +17,10 @@ pub(crate) enum SyntaxKind {
 
     OpenParenthesis,
     CloseParenthesis,
+
+    // Keywowrds
+    FalseKeyword,
+    TrueKeyword,
 }
 
 impl Display for SyntaxKind {

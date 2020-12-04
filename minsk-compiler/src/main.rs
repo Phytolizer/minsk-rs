@@ -9,6 +9,7 @@ use crossterm::{
 };
 use std::io::{self, BufRead, BufReader, Write};
 mod code_analysis;
+mod minsk_type;
 mod minsk_value;
 
 fn main() -> anyhow::Result<()> {
@@ -49,9 +50,7 @@ fn main() -> anyhow::Result<()> {
         let mut diagnostics = tree.diagnostics().to_owned();
         let mut binder = Binder::new();
         let bound_expression = binder.bind(tree.root());
-        let mut diagnostics2 = binder.diagnostics().to_vec();
-        diagnostics.append(&mut diagnostics2);
-        drop(diagnostics2);
+        diagnostics.append(&mut binder.diagnostics().to_vec());
         if show_tree {
             println!("{}", tree.root());
         }

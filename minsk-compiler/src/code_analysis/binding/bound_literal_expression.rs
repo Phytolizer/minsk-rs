@@ -1,6 +1,4 @@
-use crate::minsk_value::MinskValue;
-
-use super::minsk_type::MinskType;
+use crate::{minsk_type::MinskType, minsk_value::MinskValue};
 
 #[derive(Debug)]
 pub(crate) struct BoundLiteralExpression {
@@ -11,6 +9,7 @@ impl BoundLiteralExpression {
     pub(super) fn kind(&self) -> MinskType {
         match self.value {
             MinskValue::Integer(_) => MinskType::Integer,
+            MinskValue::Boolean(_) => MinskType::Boolean,
         }
     }
 }

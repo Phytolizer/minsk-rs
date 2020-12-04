@@ -6,4 +6,3 @@ mod bound_literal_expression;
 mod bound_node;
 mod bound_unary_expression;
 pub(super) mod bound_unary_operator_kind;
-mod minsk_type;

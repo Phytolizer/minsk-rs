@@ -1,8 +1,9 @@
 use std::fmt::Display;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub(super) enum MinskType {
+pub(crate) enum MinskType {
     Integer,
+    Boolean,
 }
 
 impl Display for MinskType {

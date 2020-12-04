@@ -8,31 +8,28 @@ use super::binding::{
 pub(crate) struct Evaluator;
 
 impl Evaluator {
-    pub(crate) fn evaluate(root: &BoundExpression) -> i32 {
+    pub(crate) fn evaluate(root: &BoundExpression) -> MinskValue {
         Self::evaluate_expression(root)
     }
 
-    fn evaluate_expression(root: &BoundExpression) -> i32 {
+    fn evaluate_expression(root: &BoundExpression) -> MinskValue {
         match root {
-            BoundExpression::BoundLiteralExpression(lit) => {
-                let MinskValue::Integer(i) = lit.value;
-                i
-            }
+            BoundExpression::BoundLiteralExpression(lit) => lit.value.clone(),
             BoundExpression::BoundUnaryExpression(u) => {
-                let operand = Self::evaluate_expression(&u.operand);
+                let operand = Self::evaluate_expression(&u.operand).as_int().unwrap();
                 match u.operator_kind {
-                    BoundUnaryOperatorKind::Identity => operand,
-                    BoundUnaryOperatorKind::Negation => -operand,
+                    BoundUnaryOperatorKind::Identity => MinskValue::Integer(operand),
+                    BoundUnaryOperatorKind::Negation => MinskValue::Integer(-operand),
                 }
             }
             BoundExpression::BoundBinaryExpression(b) => {
-                let left = Self::evaluate_expression(&b.left);
-                let right = Self::evaluate_expression(&b.right);
+                let left = Self::evaluate_expression(&b.left).as_int().unwrap();
+                let right = Self::evaluate_expression(&b.right).as_int().unwrap();
                 match b.operator_kind {
-                    BoundBinaryOperatorKind::Addition => left + right,
-                    BoundBinaryOperatorKind::Subtraction => left - right,
-                    BoundBinaryOperatorKind::Multiplication => left * right,
-                    BoundBinaryOperatorKind::Division => left / right,
+                    BoundBinaryOperatorKind::Addition => MinskValue::Integer(left + right),
+                    BoundBinaryOperatorKind::Subtraction => MinskValue::Integer(left - right),
+                    BoundBinaryOperatorKind::Multiplication => MinskValue::Integer(left * right),
+                    BoundBinaryOperatorKind::Division => MinskValue::Integer(left / right),
                 }
             }
         }

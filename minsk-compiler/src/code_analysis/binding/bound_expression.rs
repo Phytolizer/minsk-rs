@@ -1,9 +1,10 @@
 use std::fmt::Debug;
 
+use crate::minsk_type::MinskType;
+
 use super::{
     bound_binary_expression::BoundBinaryExpression,
     bound_literal_expression::BoundLiteralExpression, bound_unary_expression::BoundUnaryExpression,
-    minsk_type::MinskType,
 };
 
 #[derive(Debug)]

@@ -7,6 +7,7 @@ use crate::{
         binary_expression_syntax::BinaryExpressionSyntax,
         unary_expression_syntax::UnaryExpressionSyntax,
     },
+    minsk_type::MinskType,
     minsk_value::MinskValue,
 };
 
@@ -15,7 +16,7 @@ use super::{
     bound_binary_expression::BoundBinaryExpression,
     bound_binary_operator_kind::BoundBinaryOperatorKind, bound_expression::BoundExpression,
     bound_literal_expression::BoundLiteralExpression, bound_unary_expression::BoundUnaryExpression,
-    bound_unary_operator_kind::BoundUnaryOperatorKind, minsk_type::MinskType,
+    bound_unary_operator_kind::BoundUnaryOperatorKind,
 };
 
 pub(crate) struct Binder {
@@ -50,7 +51,7 @@ impl Binder {
     }
 
     fn bind_literal_expression(&mut self, syntax: &LiteralExpressionSyntax) -> BoundExpression {
-        let value = match &syntax.literal_token.value {
+        let value = match &syntax.value {
             Some(v) => v.clone(),
             None => MinskValue::Integer(0),
         };
