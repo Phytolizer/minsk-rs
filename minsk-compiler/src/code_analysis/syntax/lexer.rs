@@ -2,14 +2,14 @@ use crate::minsk_value::MinskValue;
 
 use super::{syntax_kind::SyntaxKind, syntax_token::SyntaxToken};
 
-pub(crate) struct Lexer {
+pub(super) struct Lexer {
     text: String,
     position: usize,
     diagnostics: Vec<String>,
 }
 
 impl Lexer {
-    pub(crate) fn new(text: String) -> Self {
+    pub(super) fn new(text: String) -> Self {
         Self {
             text,
             position: 0,
@@ -24,7 +24,7 @@ impl Lexer {
         self.position += 1;
     }
 
-    pub(crate) fn diagnostics(self) -> Vec<String> {
+    pub(super) fn diagnostics(self) -> Vec<String> {
         self.diagnostics
     }
 

@@ -1,6 +1,6 @@
 use super::syntax_kind::SyntaxKind;
 
-pub(crate) trait SyntaxFacts {
+pub(super) trait SyntaxFacts {
     fn binary_operator_precedence(&self) -> usize;
     fn unary_operator_precedence(&self) -> usize;
 }

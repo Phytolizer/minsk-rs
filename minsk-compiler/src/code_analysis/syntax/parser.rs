@@ -8,14 +8,14 @@ use super::{
     syntax_tree::SyntaxTree, unary_expression_syntax,
 };
 
-pub(crate) struct Parser {
+pub(super) struct Parser {
     tokens: Vec<SyntaxToken>,
     position: usize,
     diagnostics: Vec<String>,
 }
 
 impl Parser {
-    pub(crate) fn new(text: String) -> Self {
+    pub(super) fn new(text: String) -> Self {
         let mut lexer = Lexer::new(text);
         let mut tokens = vec![];
         loop {
@@ -132,7 +132,7 @@ impl Parser {
         ExpressionSyntax::LiteralExpressionSyntax(LiteralExpressionSyntax { literal_token })
     }
 
-    pub(crate) fn diagnostics(self) -> Vec<String> {
+    pub(super) fn diagnostics(self) -> Vec<String> {
         self.diagnostics
     }
 }
