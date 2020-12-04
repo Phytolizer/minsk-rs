@@ -3,6 +3,8 @@ use crate::{
     code_analysis::syntax::parenthesized_expression_syntax::ParenthesizedExpressionSyntax,
     code_analysis::syntax::syntax_node::SyntaxNode,
     code_analysis::{
+        diagnostic::Diagnostic,
+        diagnostic_bag::DiagnosticBag,
         minsk_value::MinskValue,
         syntax::{
             binary_expression_syntax::BinaryExpressionSyntax,
@@ -19,18 +21,18 @@ use super::{
 };
 
 pub struct Binder {
-    diagnostics: Vec<String>,
+    diagnostics: DiagnosticBag,
 }
 
 impl Binder {
     pub fn new() -> Self {
         Self {
-            diagnostics: vec![],
+            diagnostics: DiagnosticBag::new(),
         }
     }
 
-    pub fn diagnostics(&self) -> &[String] {
-        &self.diagnostics
+    pub fn diagnostics(&self) -> impl Iterator<Item = Diagnostic> + '_ {
+        self.diagnostics.iter()
     }
 
     pub fn bind(&mut self, syntax: &SyntaxNode) -> BoundExpression {
@@ -66,11 +68,11 @@ impl Binder {
                 operand: Box::new(operand),
             })
         } else {
-            self.diagnostics.push(format!(
-                "Unary operator '{}' is not defined for type {}",
-                syntax.operator_token.text,
-                operand.kind()
-            ));
+            self.diagnostics.report_undefined_unary_operator(
+                syntax.operator_token.span.clone(),
+                &syntax.operator_token.text,
+                operand.kind(),
+            );
             operand
         }
     }
@@ -87,12 +89,12 @@ impl Binder {
                 right: Box::new(right),
             })
         } else {
-            self.diagnostics.push(format!(
-                "Binary operator '{}' is not defined for types {} and {}",
-                syntax.operator_token.text,
+            self.diagnostics.report_undefined_binary_operator(
+                syntax.operator_token.span.clone(),
+                &syntax.operator_token.text,
                 left.kind(),
-                right.kind()
-            ));
+                right.kind(),
+            );
             left
         }
     }

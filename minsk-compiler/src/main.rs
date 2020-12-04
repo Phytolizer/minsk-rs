@@ -4,8 +4,7 @@ use crossterm::{
     ExecutableCommand,
 };
 use minsk_language::code_analysis::{
-    binding::binder::Binder, compilation::Compilation, evaluation_result::EvaluationResult,
-    evaluator::Evaluator, syntax::syntax_tree::SyntaxTree,
+    compilation::Compilation, evaluation_result::EvaluationResult, syntax::syntax_tree::SyntaxTree,
 };
 use std::io::{self, BufRead, BufReader, Write};
 
@@ -50,11 +49,21 @@ fn main() -> anyhow::Result<()> {
         let evaluation_result = Compilation::evaluate(tree);
         match evaluation_result {
             EvaluationResult::Error(diagnostics) => {
-                stdout.execute(SetForegroundColor(Color::DarkRed))?;
                 for diagnostic in diagnostics {
+                    println!();
+                    stdout.execute(SetForegroundColor(Color::DarkRed))?;
                     println!("{}", diagnostic);
+                    stdout.execute(ResetColor)?;
+                    let prefix = &line[0..diagnostic.span.start];
+                    let error = &line[diagnostic.span.start..diagnostic.span.end];
+                    let suffix = &line[diagnostic.span.end..];
+
+                    print!("    {}", prefix);
+                    stdout.execute(SetForegroundColor(Color::DarkRed))?;
+                    print!("{}", error);
+                    stdout.execute(ResetColor)?;
+                    println!("{}", suffix);
                 }
-                stdout.execute(ResetColor)?;
             }
             EvaluationResult::Value(value) => {
                 println!("{}", value);

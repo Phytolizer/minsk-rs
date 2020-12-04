@@ -9,8 +9,8 @@ impl Compilation {
     pub fn evaluate(syntax: SyntaxTree) -> EvaluationResult {
         let mut binder = Binder::new();
         let bound_expression = binder.bind(syntax.root());
-        let mut diagnostics = syntax.diagnostics().to_vec();
-        diagnostics.append(&mut binder.diagnostics().to_vec());
+        let mut diagnostics = syntax.diagnostics().collect::<Vec<_>>();
+        diagnostics.append(&mut binder.diagnostics().collect());
         if diagnostics.len() > 0 {
             return EvaluationResult::Error(diagnostics);
         }

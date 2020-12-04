@@ -1,10 +1,14 @@
+use crate::code_analysis::{
+    diagnostic_bag::DiagnosticBag, minsk_type::MinskType, text_span::TextSpan,
+};
+
 use super::super::minsk_value::MinskValue;
 use super::{syntax_facts::SyntaxFacts, syntax_kind::SyntaxKind, syntax_token::SyntaxToken};
 
 pub(super) struct Lexer {
     text: String,
     position: usize,
-    diagnostics: Vec<String>,
+    diagnostics: DiagnosticBag,
 }
 
 impl Lexer {
@@ -12,7 +16,7 @@ impl Lexer {
         Self {
             text,
             position: 0,
-            diagnostics: vec![],
+            diagnostics: DiagnosticBag::new(),
         }
     }
 
@@ -26,18 +30,13 @@ impl Lexer {
         self.position += 1;
     }
 
-    pub(super) fn diagnostics(self) -> Vec<String> {
+    pub(super) fn diagnostics(self) -> DiagnosticBag {
         self.diagnostics
     }
 
     pub(crate) fn next_token(&mut self) -> SyntaxToken {
         match self.current() {
-            '\0' => SyntaxToken {
-                kind: SyntaxKind::EndOfFile,
-                position: self.position,
-                text: String::new(),
-                value: None,
-            },
+            '\0' => SyntaxToken::new(SyntaxKind::EndOfFile, self.position, String::new(), None),
             d if d.is_numeric() => {
                 let start = self.position;
                 while self.current().is_numeric() {
@@ -47,19 +46,18 @@ impl Lexer {
                 let value = match text.parse::<i32>() {
                     Ok(i) => Some(MinskValue::Integer(i)),
                     Err(_) => {
-                        self.diagnostics.push(format!(
-                            "ERROR: The number {} cannot be represented by a 32-bit signed integer",
-                            text
-                        ));
+                        self.diagnostics.report_invalid_number(
+                            TextSpan {
+                                start,
+                                end: self.position,
+                            },
+                            text,
+                            MinskType::Integer,
+                        );
                         None
                     }
                 };
-                SyntaxToken {
-                    kind: SyntaxKind::Number,
-                    position: start,
-                    text: text.to_string(),
-                    value,
-                }
+                SyntaxToken::new(SyntaxKind::Number, start, text.to_string(), value)
             }
             w if w.is_whitespace() => {
                 let start = self.position;
@@ -67,12 +65,7 @@ impl Lexer {
                     self.next();
                 }
                 let text = &self.text[start..self.position];
-                SyntaxToken {
-                    kind: SyntaxKind::Whitespace,
-                    position: start,
-                    text: text.to_string(),
-                    value: None,
-                }
+                SyntaxToken::new(SyntaxKind::Whitespace, start, text.to_string(), None)
             }
             l if l.is_alphabetic() => {
                 let start = self.position;
@@ -81,12 +74,7 @@ impl Lexer {
                 }
                 let text = &self.text[start..self.position];
                 let kind = SyntaxFacts::keyword_kind(text);
-                SyntaxToken {
-                    kind,
-                    position: start,
-                    text: text.to_string(),
-                    value: None,
-                }
+                SyntaxToken::new(kind, start, text.to_string(), None)
             }
             '+' => self.simple_token(SyntaxKind::Plus, 1),
             '-' => self.simple_token(SyntaxKind::Minus, 1),
@@ -106,7 +94,7 @@ impl Lexer {
             '=' if self.lookahead() == '=' => self.simple_token(SyntaxKind::EqualsEquals, 2),
             _ => {
                 self.diagnostics
-                    .push(format!("ERROR: bad character input: {}", self.current()));
+                    .report_bad_character(self.position, self.current());
                 self.simple_token(SyntaxKind::BadToken, 1)
             }
         }
@@ -114,11 +102,11 @@ impl Lexer {
 
     fn simple_token(&mut self, kind: SyntaxKind, size: usize) -> SyntaxToken {
         self.position += size;
-        SyntaxToken {
+        SyntaxToken::new(
             kind,
-            position: self.position - size,
-            text: self.text[self.position - size..self.position].to_string(),
-            value: None,
-        }
+            self.position - size,
+            self.text[self.position - size..self.position].to_string(),
+            None,
+        )
     }
 }

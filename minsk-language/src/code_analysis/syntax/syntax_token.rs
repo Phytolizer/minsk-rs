@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use crate::code_analysis::text_span::TextSpan;
+
 use super::super::minsk_value::MinskValue;
 
 use super::syntax_kind::SyntaxKind;
@@ -10,6 +12,27 @@ pub(crate) struct SyntaxToken {
     pub(crate) position: usize,
     pub(crate) text: String,
     pub(crate) value: Option<MinskValue>,
+    pub(crate) span: TextSpan,
+}
+
+impl SyntaxToken {
+    pub(crate) fn new(
+        kind: SyntaxKind,
+        position: usize,
+        text: String,
+        value: Option<MinskValue>,
+    ) -> Self {
+        Self {
+            kind,
+            position,
+            span: TextSpan {
+                start: position,
+                end: position + text.chars().count(),
+            },
+            text,
+            value,
+        }
+    }
 }
 
 impl Display for SyntaxToken {

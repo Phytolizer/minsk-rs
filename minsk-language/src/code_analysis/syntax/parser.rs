@@ -1,5 +1,7 @@
 use unary_expression_syntax::UnaryExpressionSyntax;
 
+use crate::code_analysis::diagnostic_bag::DiagnosticBag;
+
 use super::super::minsk_value::MinskValue;
 
 use super::{
@@ -13,7 +15,7 @@ use super::{
 pub(super) struct Parser {
     tokens: Vec<SyntaxToken>,
     position: usize,
-    diagnostics: Vec<String>,
+    diagnostics: DiagnosticBag,
 }
 
 impl Parser {
@@ -60,17 +62,12 @@ impl Parser {
         if self.current().kind == kind {
             self.next_token()
         } else {
-            self.diagnostics.push(format!(
-                "ERROR: Unexpected token <{}>, expected <{}>",
+            self.diagnostics.report_unexpected_token(
+                self.current().span,
                 self.current().kind,
-                kind
-            ));
-            SyntaxToken {
                 kind,
-                position: self.current().position,
-                text: String::new(),
-                value: None,
-            }
+            );
+            SyntaxToken::new(kind, self.current().position, String::new(), None)
         }
     }
 
@@ -148,7 +145,7 @@ impl Parser {
         }
     }
 
-    pub(super) fn diagnostics(self) -> Vec<String> {
+    pub(super) fn diagnostics(self) -> DiagnosticBag {
         self.diagnostics
     }
 }
