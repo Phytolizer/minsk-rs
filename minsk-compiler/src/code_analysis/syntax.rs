@@ -1,12 +1,12 @@
-mod binary_expression_syntax;
+pub(super) mod binary_expression_syntax;
 pub(super) mod expression_syntax;
 mod lexer;
-mod literal_expression_syntax;
-mod parenthesized_expression_syntax;
+pub(super) mod literal_expression_syntax;
+pub(super) mod parenthesized_expression_syntax;
 mod parser;
 mod syntax_facts;
 pub(super) mod syntax_kind;
 pub(crate) mod syntax_node;
 mod syntax_token;
 pub(crate) mod syntax_tree;
-mod unary_expression_syntax;
+pub(super) mod unary_expression_syntax;

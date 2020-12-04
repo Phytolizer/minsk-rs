@@ -1,5 +1,6 @@
 use code_analysis::{
-    evaluator::Evaluator, syntax::syntax_node::SyntaxNode, syntax::syntax_tree::SyntaxTree,
+    binding::binder::Binder, evaluator::Evaluator, syntax::syntax_node::SyntaxNode,
+    syntax::syntax_tree::SyntaxTree,
 };
 use crossterm::{
     style::{Color, ResetColor, SetForegroundColor},
@@ -45,6 +46,12 @@ fn main() -> anyhow::Result<()> {
         }
 
         let tree = SyntaxTree::parse(line.trim().to_string());
+        let mut diagnostics = tree.diagnostics().to_owned();
+        let mut binder = Binder::new();
+        let bound_expression = binder.bind(tree.root());
+        let mut diagnostics2 = binder.diagnostics().to_vec();
+        diagnostics.append(&mut diagnostics2);
+        drop(diagnostics2);
         if show_tree {
             println!("{}", tree.root());
         }
@@ -55,7 +62,7 @@ fn main() -> anyhow::Result<()> {
             }
             stdout.execute(ResetColor)?;
         } else if let SyntaxNode::ExpressionSyntax(e) = tree.root() {
-            let result = Evaluator::evaluate(e);
+            let result = Evaluator::evaluate(&bound_expression);
             println!("{}", result);
         }
     }
