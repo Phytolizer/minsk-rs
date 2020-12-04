@@ -34,16 +34,24 @@ impl Evaluator {
                 let right = Self::evaluate_expression(&b.right);
                 match b.op.kind {
                     BoundBinaryOperatorKind::Addition => MinskValue::Integer(
-                        left.as_integer().unwrap() + right.as_integer().unwrap(),
+                        left.as_integer()
+                            .unwrap()
+                            .wrapping_add(right.as_integer().unwrap()),
                     ),
                     BoundBinaryOperatorKind::Subtraction => MinskValue::Integer(
-                        left.as_integer().unwrap() - right.as_integer().unwrap(),
+                        left.as_integer()
+                            .unwrap()
+                            .wrapping_sub(right.as_integer().unwrap()),
                     ),
                     BoundBinaryOperatorKind::Multiplication => MinskValue::Integer(
-                        left.as_integer().unwrap() * right.as_integer().unwrap(),
+                        left.as_integer()
+                            .unwrap()
+                            .wrapping_mul(right.as_integer().unwrap()),
                     ),
                     BoundBinaryOperatorKind::Division => MinskValue::Integer(
-                        left.as_integer().unwrap() / right.as_integer().unwrap(),
+                        left.as_integer()
+                            .unwrap()
+                            .wrapping_div(right.as_integer().unwrap()),
                     ),
                     BoundBinaryOperatorKind::Equality => MinskValue::Boolean(left == right),
                     BoundBinaryOperatorKind::Inequality => MinskValue::Boolean(left != right),
