@@ -72,15 +72,15 @@ impl Parser {
         }
     }
 
-    pub(crate) fn parse(mut self) -> SyntaxTree {
+    pub(super) fn parse(mut self) -> SyntaxTree {
         let expression = self.parse_expression(0);
         let end_of_file_token = self.match_token(SyntaxKind::EndOfFile);
 
-        SyntaxTree::new(
-            SyntaxNode::ExpressionSyntax(expression),
+        SyntaxTree {
+            root: SyntaxNode::ExpressionSyntax(expression),
             end_of_file_token,
-            self.diagnostics(),
-        )
+            diagnostics: self.diagnostics(),
+        }
     }
 
     fn parse_expression(&mut self, parent_precedence: usize) -> ExpressionSyntax {

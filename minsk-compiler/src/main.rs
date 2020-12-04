@@ -1,5 +1,5 @@
 use code_analysis::{
-    evaluator::Evaluator, syntax::parser::Parser, syntax::syntax_node::SyntaxNode,
+    evaluator::Evaluator, syntax::syntax_node::SyntaxNode, syntax::syntax_tree::SyntaxTree,
 };
 use crossterm::{
     style::{Color, ResetColor, SetForegroundColor},
@@ -44,8 +44,7 @@ fn main() -> anyhow::Result<()> {
             _ => {}
         }
 
-        let parser = Parser::new(line.trim().to_string());
-        let tree = parser.parse();
+        let tree = SyntaxTree::parse(line.trim().to_string());
         if show_tree {
             println!("{}", tree.root());
         }
