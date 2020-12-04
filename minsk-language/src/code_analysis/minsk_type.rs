@@ -1,9 +1,10 @@
 use std::fmt::Display;
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum MinskType {
     Integer,
     Boolean,
+    Null,
 }
 
 impl Display for MinskType {

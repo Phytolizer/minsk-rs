@@ -5,7 +5,7 @@ use crossterm::{
 };
 use minsk_language::code_analysis::{
     compilation::Compilation, evaluation_result::EvaluationResult, minsk_value::MinskValue,
-    syntax::syntax_tree::SyntaxTree,
+    syntax::syntax_tree::SyntaxTree, variable_symbol::VariableSymbol,
 };
 use std::{
     collections::HashMap,
@@ -17,7 +17,7 @@ fn main() -> anyhow::Result<()> {
     let mut reader = BufReader::new(io::stdin());
     let mut line = String::new();
     let mut show_tree = true;
-    let mut variables = HashMap::<String, MinskValue>::new();
+    let mut variables = HashMap::<VariableSymbol, MinskValue>::new();
 
     loop {
         line.clear();

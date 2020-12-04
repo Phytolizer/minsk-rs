@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use super::minsk_value::MinskValue;
+use super::{minsk_value::MinskValue, variable_symbol::VariableSymbol};
 
 use super::binding::{
     bound_binary_operator_kind::BoundBinaryOperatorKind, bound_expression::BoundExpression,
@@ -8,11 +8,11 @@ use super::binding::{
 };
 
 pub struct Evaluator<'compilation> {
-    variables: &'compilation mut HashMap<String, MinskValue>,
+    variables: &'compilation mut HashMap<VariableSymbol, MinskValue>,
 }
 
 impl<'compilation> Evaluator<'compilation> {
-    pub fn new(variables: &'compilation mut HashMap<String, MinskValue>) -> Self {
+    pub fn new(variables: &'compilation mut HashMap<VariableSymbol, MinskValue>) -> Self {
         Self { variables }
     }
 
@@ -71,10 +71,10 @@ impl<'compilation> Evaluator<'compilation> {
                     ),
                 }
             }
-            BoundExpression::Variable(v) => self.variables.get(&v.name).unwrap().clone(),
+            BoundExpression::Variable(v) => self.variables.get(&v.variable).unwrap().clone(),
             BoundExpression::Assignment(a) => {
                 let value = self.evaluate_expression(&a.expression);
-                self.variables.insert(a.name.clone(), value.clone());
+                self.variables.insert(a.variable.clone(), value.clone());
                 value
             }
         }

@@ -1,10 +1,10 @@
-use crate::code_analysis::minsk_type::MinskType;
+use crate::code_analysis::{minsk_type::MinskType, variable_symbol::VariableSymbol};
 
 use super::bound_expression::BoundExpression;
 
 #[derive(Debug)]
 pub struct BoundAssignmentExpression {
-    pub(crate) name: String,
+    pub(crate) variable: VariableSymbol,
     pub(crate) expression: Box<BoundExpression>,
 }
 

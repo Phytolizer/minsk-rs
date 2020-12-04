@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use super::{
     binding::binder::Binder, evaluation_result::EvaluationResult, evaluator::Evaluator,
-    minsk_value::MinskValue, syntax::syntax_tree::SyntaxTree,
+    minsk_value::MinskValue, syntax::syntax_tree::SyntaxTree, variable_symbol::VariableSymbol,
 };
 
 pub struct Compilation;
@@ -10,7 +10,7 @@ pub struct Compilation;
 impl Compilation {
     pub fn evaluate(
         syntax: SyntaxTree,
-        variables: &mut HashMap<String, MinskValue>,
+        variables: &mut HashMap<VariableSymbol, MinskValue>,
     ) -> EvaluationResult {
         let mut binder = Binder::new(variables);
         let bound_expression = binder.bind(syntax.root());

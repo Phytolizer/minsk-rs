@@ -10,6 +10,7 @@ impl BoundLiteralExpression {
         match self.value {
             MinskValue::Integer(_) => MinskType::Integer,
             MinskValue::Boolean(_) => MinskType::Boolean,
+            MinskValue::Null => MinskType::Null,
         }
     }
 }
