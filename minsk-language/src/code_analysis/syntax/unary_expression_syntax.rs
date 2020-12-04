@@ -3,7 +3,7 @@ use std::fmt::Display;
 use super::{expression_syntax::ExpressionSyntax, syntax_token::SyntaxToken};
 
 #[derive(Debug, Clone)]
-pub(crate) struct UnaryExpressionSyntax {
+pub struct UnaryExpressionSyntax {
     pub(crate) operator_token: SyntaxToken,
     pub(crate) operand: Box<ExpressionSyntax>,
 }

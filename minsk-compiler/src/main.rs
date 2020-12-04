@@ -1,16 +1,12 @@
-use code_analysis::{
-    binding::binder::Binder, evaluator::Evaluator, syntax::syntax_node::SyntaxNode,
-    syntax::syntax_tree::SyntaxTree,
-};
 use crossterm::{
     style::{Color, ResetColor, SetForegroundColor},
     terminal::{Clear, ClearType},
     ExecutableCommand,
 };
+use minsk_language::code_analysis::{
+    binding::binder::Binder, evaluator::Evaluator, syntax::syntax_tree::SyntaxTree,
+};
 use std::io::{self, BufRead, BufReader, Write};
-mod code_analysis;
-mod minsk_type;
-mod minsk_value;
 
 fn main() -> anyhow::Result<()> {
     let mut stdout = io::stdout();

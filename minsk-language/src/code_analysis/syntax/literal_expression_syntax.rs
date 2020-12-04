@@ -1,11 +1,11 @@
 use std::fmt::Display;
 
-use crate::minsk_value::MinskValue;
+use super::super::minsk_value::MinskValue;
 
 use super::syntax_token::SyntaxToken;
 
 #[derive(Debug, Clone)]
-pub(crate) struct LiteralExpressionSyntax {
+pub struct LiteralExpressionSyntax {
     pub(crate) literal_token: SyntaxToken,
     pub(crate) value: Option<MinskValue>,
 }

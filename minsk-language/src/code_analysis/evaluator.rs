@@ -1,14 +1,14 @@
-use crate::minsk_value::MinskValue;
+use super::minsk_value::MinskValue;
 
 use super::binding::{
     bound_binary_operator_kind::BoundBinaryOperatorKind, bound_expression::BoundExpression,
     bound_unary_operator_kind::BoundUnaryOperatorKind,
 };
 
-pub(crate) struct Evaluator;
+pub struct Evaluator;
 
 impl Evaluator {
-    pub(crate) fn evaluate(root: &BoundExpression) -> MinskValue {
+    pub fn evaluate(root: &BoundExpression) -> MinskValue {
         Self::evaluate_expression(root)
     }
 

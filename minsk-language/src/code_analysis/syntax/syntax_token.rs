@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::minsk_value::MinskValue;
+use super::super::minsk_value::MinskValue;
 
 use super::syntax_kind::SyntaxKind;
 

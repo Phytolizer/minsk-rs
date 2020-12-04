@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 #[derive(Debug, Clone, Eq)]
-pub(crate) enum MinskValue {
+pub enum MinskValue {
     Integer(i32),
     Boolean(bool),
 }

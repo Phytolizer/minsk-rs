@@ -1,6 +1,6 @@
-use crate::{code_analysis::syntax::syntax_kind::SyntaxKind, minsk_type::MinskType};
+use crate::code_analysis::syntax::syntax_kind::SyntaxKind;
 
-use super::bound_binary_operator_kind::BoundBinaryOperatorKind;
+use super::{super::minsk_type::MinskType, bound_binary_operator_kind::BoundBinaryOperatorKind};
 
 #[derive(Debug, Copy, Clone)]
 pub(crate) struct BoundBinaryOperator {

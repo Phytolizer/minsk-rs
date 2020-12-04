@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use crate::minsk_type::MinskType;
+use super::super::minsk_type::MinskType;
 
 use super::{
     bound_binary_expression::BoundBinaryExpression,
@@ -8,7 +8,7 @@ use super::{
 };
 
 #[derive(Debug)]
-pub(crate) enum BoundExpression {
+pub enum BoundExpression {
     BoundBinaryExpression(BoundBinaryExpression),
     BoundLiteralExpression(BoundLiteralExpression),
     BoundUnaryExpression(BoundUnaryExpression),

@@ -1,6 +1,6 @@
 use unary_expression_syntax::UnaryExpressionSyntax;
 
-use crate::minsk_value::MinskValue;
+use super::super::minsk_value::MinskValue;
 
 use super::{
     binary_expression_syntax::BinaryExpressionSyntax, expression_syntax::ExpressionSyntax,

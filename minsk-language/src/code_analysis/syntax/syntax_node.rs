@@ -3,7 +3,7 @@ use std::fmt::Display;
 use super::expression_syntax::ExpressionSyntax;
 
 #[derive(Debug)]
-pub(crate) enum SyntaxNode {
+pub enum SyntaxNode {
     ExpressionSyntax(ExpressionSyntax),
 }
 

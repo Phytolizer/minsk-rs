@@ -1,9 +1,9 @@
-use crate::minsk_type::MinskType;
+use super::super::minsk_type::MinskType;
 
 use super::{bound_expression::BoundExpression, bound_unary_operator::BoundUnaryOperator};
 
 #[derive(Debug)]
-pub(crate) struct BoundUnaryExpression {
+pub struct BoundUnaryExpression {
     pub(crate) op: BoundUnaryOperator,
     pub(crate) operand: Box<BoundExpression>,
 }

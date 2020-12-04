@@ -1,7 +1,7 @@
-use crate::{minsk_type::MinskType, minsk_value::MinskValue};
+use super::super::{minsk_type::MinskType, minsk_value::MinskValue};
 
 #[derive(Debug)]
-pub(crate) struct BoundLiteralExpression {
+pub struct BoundLiteralExpression {
     pub(crate) value: MinskValue,
 }
 

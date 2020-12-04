@@ -2,11 +2,13 @@ use crate::{
     code_analysis::syntax::expression_syntax::ExpressionSyntax,
     code_analysis::syntax::parenthesized_expression_syntax::ParenthesizedExpressionSyntax,
     code_analysis::syntax::syntax_node::SyntaxNode,
-    code_analysis::syntax::{
-        binary_expression_syntax::BinaryExpressionSyntax,
-        unary_expression_syntax::UnaryExpressionSyntax,
+    code_analysis::{
+        minsk_value::MinskValue,
+        syntax::{
+            binary_expression_syntax::BinaryExpressionSyntax,
+            unary_expression_syntax::UnaryExpressionSyntax,
+        },
     },
-    minsk_value::MinskValue,
 };
 
 use super::{
@@ -16,22 +18,22 @@ use super::{
     bound_unary_expression::BoundUnaryExpression, bound_unary_operator::BoundUnaryOperator,
 };
 
-pub(crate) struct Binder {
+pub struct Binder {
     diagnostics: Vec<String>,
 }
 
 impl Binder {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             diagnostics: vec![],
         }
     }
 
-    pub(crate) fn diagnostics(&self) -> &[String] {
+    pub fn diagnostics(&self) -> &[String] {
         &self.diagnostics
     }
 
-    pub(crate) fn bind(&mut self, syntax: &SyntaxNode) -> BoundExpression {
+    pub fn bind(&mut self, syntax: &SyntaxNode) -> BoundExpression {
         let SyntaxNode::ExpressionSyntax(e) = syntax;
         self.bind_expression(e)
     }

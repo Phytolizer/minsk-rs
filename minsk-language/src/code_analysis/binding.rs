@@ -1,4 +1,4 @@
-pub(crate) mod binder;
+pub mod binder;
 mod bound_binary_expression;
 mod bound_binary_operator;
 pub(super) mod bound_binary_operator_kind;

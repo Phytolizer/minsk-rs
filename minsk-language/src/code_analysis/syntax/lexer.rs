@@ -1,5 +1,4 @@
-use crate::minsk_value::MinskValue;
-
+use super::super::minsk_value::MinskValue;
 use super::{syntax_facts::SyntaxFacts, syntax_kind::SyntaxKind, syntax_token::SyntaxToken};
 
 pub(super) struct Lexer {

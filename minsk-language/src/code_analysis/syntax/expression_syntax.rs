@@ -8,7 +8,7 @@ use super::{
 };
 
 #[derive(Debug, Clone)]
-pub(crate) enum ExpressionSyntax {
+pub enum ExpressionSyntax {
     LiteralExpressionSyntax(LiteralExpressionSyntax),
     UnaryExpressionSyntax(UnaryExpressionSyntax),
     BinaryExpressionSyntax(BinaryExpressionSyntax),

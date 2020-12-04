@@ -3,7 +3,7 @@ use std::fmt::Display;
 use super::{expression_syntax::ExpressionSyntax, syntax_token::SyntaxToken};
 
 #[derive(Debug, Clone)]
-pub(crate) struct ParenthesizedExpressionSyntax {
+pub struct ParenthesizedExpressionSyntax {
     pub(crate) open_parenthesis_token: SyntaxToken,
     pub(crate) expression: Box<ExpressionSyntax>,
     pub(crate) close_parenthesis_token: SyntaxToken,

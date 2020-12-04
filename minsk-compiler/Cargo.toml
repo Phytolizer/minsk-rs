@@ -9,3 +9,4 @@ edition = "2018"
 [dependencies]
 crossterm = "0.18"
 anyhow = "1.0"
+minsk-language = { path = "../minsk-language" }

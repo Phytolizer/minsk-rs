@@ -1,5 +1,6 @@
-use crate::{code_analysis::syntax::syntax_kind::SyntaxKind, minsk_type::MinskType};
+use crate::code_analysis::syntax::syntax_kind::SyntaxKind;
 
+use super::super::minsk_type::MinskType;
 use super::bound_unary_operator_kind::BoundUnaryOperatorKind;
 
 #[derive(Debug, Copy, Clone)]
