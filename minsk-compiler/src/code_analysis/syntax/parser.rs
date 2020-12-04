@@ -1,8 +1,9 @@
 use super::{
     binary_expression_syntax::BinaryExpressionSyntax, expression_syntax::ExpressionSyntax,
     lexer::Lexer, literal_expression_syntax::LiteralExpressionSyntax,
-    parenthesized_expression_syntax::ParenthesizedExpressionSyntax, syntax_kind::SyntaxKind,
-    syntax_node::SyntaxNode, syntax_token::SyntaxToken, syntax_tree::SyntaxTree,
+    parenthesized_expression_syntax::ParenthesizedExpressionSyntax, syntax_facts::SyntaxFacts,
+    syntax_kind::SyntaxKind, syntax_node::SyntaxNode, syntax_token::SyntaxToken,
+    syntax_tree::SyntaxTree,
 };
 
 pub(crate) struct Parser {
@@ -70,7 +71,7 @@ impl Parser {
     }
 
     pub(crate) fn parse(mut self) -> SyntaxTree {
-        let expression = self.parse_expression();
+        let expression = self.parse_expression(0);
         let end_of_file_token = self.match_token(SyntaxKind::EndOfFile);
 
         SyntaxTree::new(
@@ -80,34 +81,16 @@ impl Parser {
         )
     }
 
-    fn parse_expression(&mut self) -> ExpressionSyntax {
-        self.parse_term()
-    }
-
-    fn parse_term(&mut self) -> ExpressionSyntax {
-        let mut left = self.parse_factor();
-
-        while self.current().kind == SyntaxKind::Plus || self.current().kind == SyntaxKind::Minus {
-            let operator_token = self.next_token();
-            let right = self.parse_factor();
-
-            left = ExpressionSyntax::BinaryExpressionSyntax(BinaryExpressionSyntax {
-                left: Box::new(left),
-                operator_token,
-                right: Box::new(right),
-            });
-        }
-
-        left
-    }
-
-    fn parse_factor(&mut self) -> ExpressionSyntax {
+    fn parse_expression(&mut self, parent_precedence: usize) -> ExpressionSyntax {
         let mut left = self.parse_primary_expression();
+        loop {
+            let precedence = self.current().kind.binary_operator_precedence();
+            if precedence == 0 || precedence <= parent_precedence {
+                break;
+            }
 
-        while self.current().kind == SyntaxKind::Star || self.current().kind == SyntaxKind::Slash {
             let operator_token = self.next_token();
-            let right = self.parse_primary_expression();
-
+            let right = self.parse_expression(precedence);
             left = ExpressionSyntax::BinaryExpressionSyntax(BinaryExpressionSyntax {
                 left: Box::new(left),
                 operator_token,
@@ -121,7 +104,7 @@ impl Parser {
     fn parse_primary_expression(&mut self) -> ExpressionSyntax {
         if self.current().kind == SyntaxKind::OpenParenthesis {
             let open_parenthesis_token = self.next_token();
-            let expression = self.parse_expression();
+            let expression = self.parse_expression(0);
             let close_parenthesis_token = self.match_token(SyntaxKind::CloseParenthesis);
             return ExpressionSyntax::ParenthesizedExpressionSyntax(
                 ParenthesizedExpressionSyntax {
