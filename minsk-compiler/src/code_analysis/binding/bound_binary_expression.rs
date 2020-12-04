@@ -11,6 +11,6 @@ pub(crate) struct BoundBinaryExpression {
 
 impl BoundBinaryExpression {
     pub(super) fn kind(&self) -> MinskType {
-        self.left.kind()
+        self.op.result_type
     }
 }

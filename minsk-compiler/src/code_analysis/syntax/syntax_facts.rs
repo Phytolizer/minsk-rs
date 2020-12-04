@@ -20,8 +20,9 @@ impl SyntaxFacts {
 impl SyntaxFactsExt for SyntaxKind {
     fn binary_operator_precedence(&self) -> usize {
         match self {
-            SyntaxKind::Star | SyntaxKind::Slash => 4,
-            SyntaxKind::Plus | SyntaxKind::Minus => 3,
+            SyntaxKind::Star | SyntaxKind::Slash => 5,
+            SyntaxKind::Plus | SyntaxKind::Minus => 4,
+            SyntaxKind::EqualsEquals | SyntaxKind::BangEquals => 3,
             SyntaxKind::PipePipe => 2,
             SyntaxKind::AmpersandAmpersand => 1,
             _ => 0,
@@ -30,7 +31,7 @@ impl SyntaxFactsExt for SyntaxKind {
 
     fn unary_operator_precedence(&self) -> usize {
         match self {
-            SyntaxKind::Plus | SyntaxKind::Minus | SyntaxKind::Bang => 5,
+            SyntaxKind::Plus | SyntaxKind::Minus | SyntaxKind::Bang => 6,
             _ => 0,
         }
     }

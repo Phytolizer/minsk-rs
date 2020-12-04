@@ -21,7 +21,21 @@ impl BoundBinaryOperator {
             result_type: ty,
         }
     }
-    pub(super) const fn operators() -> [BoundBinaryOperator; 6] {
+    const fn new_with_result_type(
+        syntax_kind: SyntaxKind,
+        kind: BoundBinaryOperatorKind,
+        ty: MinskType,
+        result_type: MinskType,
+    ) -> Self {
+        Self {
+            syntax_kind,
+            kind,
+            left_type: ty,
+            right_type: ty,
+            result_type,
+        }
+    }
+    pub(super) const fn operators() -> [BoundBinaryOperator; 8] {
         [
             BoundBinaryOperator::new(
                 SyntaxKind::Plus,
@@ -42,6 +56,18 @@ impl BoundBinaryOperator {
                 SyntaxKind::Slash,
                 BoundBinaryOperatorKind::Division,
                 MinskType::Integer,
+            ),
+            BoundBinaryOperator::new_with_result_type(
+                SyntaxKind::EqualsEquals,
+                BoundBinaryOperatorKind::Equality,
+                MinskType::Integer,
+                MinskType::Boolean,
+            ),
+            BoundBinaryOperator::new_with_result_type(
+                SyntaxKind::BangEquals,
+                BoundBinaryOperatorKind::Inequality,
+                MinskType::Integer,
+                MinskType::Boolean,
             ),
             BoundBinaryOperator::new(
                 SyntaxKind::AmpersandAmpersand,

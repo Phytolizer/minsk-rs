@@ -1,13 +1,27 @@
 use std::fmt::Display;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq)]
 pub(crate) enum MinskValue {
     Integer(i32),
     Boolean(bool),
 }
 
 impl MinskValue {
-    pub(crate) fn as_int(&self) -> Option<i32> {
+    pub(crate) fn is_integer(&self) -> bool {
+        match self {
+            Self::Integer(_) => true,
+            _ => false,
+        }
+    }
+
+    pub(crate) fn is_boolean(&self) -> bool {
+        match self {
+            Self::Boolean(_) => true,
+            _ => false,
+        }
+    }
+
+    pub(crate) fn as_integer(&self) -> Option<i32> {
         match self {
             Self::Integer(i) => Some(*i),
             _ => None,
@@ -18,6 +32,15 @@ impl MinskValue {
         match self {
             Self::Boolean(b) => Some(*b),
             _ => None,
+        }
+    }
+}
+
+impl PartialEq for MinskValue {
+    fn eq(&self, other: &Self) -> bool {
+        match self {
+            MinskValue::Integer(i) => other.is_integer() && other.as_integer().unwrap() == *i,
+            MinskValue::Boolean(b) => other.is_boolean() && other.as_boolean().unwrap() == *b,
         }
     }
 }

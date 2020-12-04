@@ -10,6 +10,6 @@ pub(crate) struct BoundUnaryExpression {
 
 impl BoundUnaryExpression {
     pub(super) fn kind(&self) -> MinskType {
-        self.operand.kind()
+        self.op.result_type
     }
 }
