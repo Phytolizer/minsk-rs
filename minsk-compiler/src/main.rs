@@ -60,7 +60,7 @@ fn main() -> anyhow::Result<()> {
                 println!("{}", diagnostic);
             }
             stdout.execute(ResetColor)?;
-        } else if let SyntaxNode::ExpressionSyntax(e) = tree.root() {
+        } else {
             let result = Evaluator::evaluate(&bound_expression);
             println!("{}", result);
         }
