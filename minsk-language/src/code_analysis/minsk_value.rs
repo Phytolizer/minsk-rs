@@ -17,17 +17,11 @@ impl MinskValue {
     }
 
     pub(crate) fn is_integer(&self) -> bool {
-        match self {
-            Self::Integer(_) => true,
-            _ => false,
-        }
+        matches!(self, Self::Integer(_))
     }
 
     pub(crate) fn is_boolean(&self) -> bool {
-        match self {
-            Self::Boolean(_) => true,
-            _ => false,
-        }
+        matches!(self, Self::Boolean(_))
     }
 
     pub(crate) fn as_integer(&self) -> Option<i32> {

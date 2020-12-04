@@ -16,7 +16,7 @@ impl Compilation {
         let bound_expression = binder.bind(syntax.root());
         let mut diagnostics = syntax.diagnostics().collect::<Vec<_>>();
         diagnostics.append(&mut binder.diagnostics().collect());
-        if diagnostics.len() > 0 {
+        if !diagnostics.is_empty() {
             return EvaluationResult::Error(diagnostics);
         }
         let value = Evaluator::new(variables).evaluate(&bound_expression);
