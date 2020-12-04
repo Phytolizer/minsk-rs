@@ -118,12 +118,10 @@ impl<'compilation> Binder<'compilation> {
     fn bind_name_expression(&mut self, syntax: &NameExpressionSyntax) -> BoundExpression {
         let name = &syntax.identifier_token.text;
         if let Some(value) = self.variables.get(name) {
-            // FIXME use ty here?
-            #[allow(unused_variables)]
             let ty = value.kind();
             BoundExpression::Variable(BoundVariableExpression {
                 name: name.to_string(),
-                ty: MinskType::Integer,
+                ty,
             })
         } else {
             self.diagnostics
@@ -138,9 +136,16 @@ impl<'compilation> Binder<'compilation> {
         &mut self,
         syntax: &AssignmentExpressionSyntax,
     ) -> BoundExpression {
+        let name = syntax.identifier_token.text.clone();
         let bound = self.bind_expression(&syntax.expression);
+
+        let default_value = match bound.kind() {
+            MinskType::Integer => MinskValue::Integer(0),
+            MinskType::Boolean => MinskValue::Boolean(false),
+        };
+        self.variables.insert(name.clone(), default_value);
         BoundExpression::Assignment(BoundAssignmentExpression {
-            name: syntax.identifier_token.text.clone(),
+            name,
             expression: Box::new(bound),
         })
     }
