@@ -2,9 +2,9 @@ use super::{parser::Parser, syntax_node::SyntaxNode, syntax_token::SyntaxToken};
 
 #[derive(Debug)]
 pub(crate) struct SyntaxTree {
-    pub(crate) root: SyntaxNode,
-    pub(crate) end_of_file_token: SyntaxToken,
-    pub(crate) diagnostics: Vec<String>,
+    pub(super) root: SyntaxNode,
+    pub(super) end_of_file_token: SyntaxToken,
+    pub(super) diagnostics: Vec<String>,
 }
 
 impl SyntaxTree {
