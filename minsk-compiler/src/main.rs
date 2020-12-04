@@ -1,22 +1,23 @@
-use code_analysis::{
-    binding::binder::Binder, evaluator::Evaluator, syntax::syntax_node::SyntaxNode,
-    syntax::syntax_tree::SyntaxTree,
-};
 use crossterm::{
     style::{Color, ResetColor, SetForegroundColor},
     terminal::{Clear, ClearType},
     ExecutableCommand,
 };
-use std::io::{self, BufRead, BufReader, Write};
-mod code_analysis;
-mod minsk_type;
-mod minsk_value;
+use minsk_language::code_analysis::{
+    compilation::Compilation, evaluation_result::EvaluationResult, minsk_value::MinskValue,
+    syntax::syntax_tree::SyntaxTree, variable_symbol::VariableSymbol,
+};
+use std::{
+    collections::HashMap,
+    io::{self, BufRead, BufReader, Write},
+};
 
 fn main() -> anyhow::Result<()> {
     let mut stdout = io::stdout();
     let mut reader = BufReader::new(io::stdin());
     let mut line = String::new();
     let mut show_tree = true;
+    let mut variables = HashMap::<VariableSymbol, MinskValue>::new();
 
     loop {
         line.clear();
@@ -47,22 +48,31 @@ fn main() -> anyhow::Result<()> {
         }
 
         let tree = SyntaxTree::parse(line.trim().to_string());
-        let mut diagnostics = tree.diagnostics().to_owned();
-        let mut binder = Binder::new();
-        let bound_expression = binder.bind(tree.root());
-        diagnostics.append(&mut binder.diagnostics().to_vec());
         if show_tree {
             println!("{}", tree.root());
         }
-        if diagnostics.len() > 0 {
-            stdout.execute(SetForegroundColor(Color::DarkRed))?;
-            for diagnostic in diagnostics {
-                println!("{}", diagnostic);
+        let evaluation_result = Compilation::evaluate(tree, &mut variables);
+        match evaluation_result {
+            EvaluationResult::Error(diagnostics) => {
+                for diagnostic in diagnostics {
+                    println!();
+                    stdout.execute(SetForegroundColor(Color::DarkRed))?;
+                    println!("{}", diagnostic);
+                    stdout.execute(ResetColor)?;
+                    let prefix = &line[0..diagnostic.span.start];
+                    let error = &line[diagnostic.span.start..diagnostic.span.end];
+                    let suffix = &line[diagnostic.span.end..];
+
+                    print!("    {}", prefix);
+                    stdout.execute(SetForegroundColor(Color::DarkRed))?;
+                    print!("{}", error);
+                    stdout.execute(ResetColor)?;
+                    println!("{}", suffix);
+                }
             }
-            stdout.execute(ResetColor)?;
-        } else {
-            let result = Evaluator::evaluate(&bound_expression);
-            println!("{}", result);
+            EvaluationResult::Value(value) => {
+                println!("{}", value);
+            }
         }
     }
     Ok(())

@@ -1,3 +1,5 @@
+pub mod code_analysis;
+
 #[cfg(test)]
 mod tests {
     #[test]
