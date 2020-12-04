@@ -1,6 +1,9 @@
 use std::fmt::Debug;
 
-use super::super::minsk_type::MinskType;
+use super::{
+    super::minsk_type::MinskType, bound_assignment_expression::BoundAssignmentExpression,
+    bound_variable_expression::BoundVariableExpression,
+};
 
 use super::{
     bound_binary_expression::BoundBinaryExpression,
@@ -9,17 +12,21 @@ use super::{
 
 #[derive(Debug)]
 pub enum BoundExpression {
-    BoundBinaryExpression(BoundBinaryExpression),
-    BoundLiteralExpression(BoundLiteralExpression),
-    BoundUnaryExpression(BoundUnaryExpression),
+    Binary(BoundBinaryExpression),
+    Literal(BoundLiteralExpression),
+    Unary(BoundUnaryExpression),
+    Variable(BoundVariableExpression),
+    Assignment(BoundAssignmentExpression),
 }
 
 impl BoundExpression {
     pub(super) fn kind(&self) -> MinskType {
         match self {
-            BoundExpression::BoundBinaryExpression(b) => b.kind(),
-            BoundExpression::BoundLiteralExpression(l) => l.kind(),
-            BoundExpression::BoundUnaryExpression(u) => u.kind(),
+            BoundExpression::Binary(b) => b.kind(),
+            BoundExpression::Literal(l) => l.kind(),
+            BoundExpression::Unary(u) => u.kind(),
+            BoundExpression::Variable(v) => v.kind(),
+            BoundExpression::Assignment(a) => a.kind(),
         }
     }
 }

@@ -79,4 +79,9 @@ impl DiagnosticBag {
         );
         self.report(span, message);
     }
+
+    pub(crate) fn report_undefined_name(&mut self, span: TextSpan, name: &str) {
+        let message = format!("Variable '{}' doesn't exist", name);
+        self.report(span, message);
+    }
 }

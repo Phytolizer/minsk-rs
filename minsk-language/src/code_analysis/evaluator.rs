@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use super::minsk_value::MinskValue;
 
 use super::binding::{
@@ -5,18 +7,24 @@ use super::binding::{
     bound_unary_operator_kind::BoundUnaryOperatorKind,
 };
 
-pub struct Evaluator;
+pub struct Evaluator<'compilation> {
+    variables: &'compilation mut HashMap<String, MinskValue>,
+}
 
-impl Evaluator {
-    pub fn evaluate(root: &BoundExpression) -> MinskValue {
-        Self::evaluate_expression(root)
+impl<'compilation> Evaluator<'compilation> {
+    pub fn new(variables: &'compilation mut HashMap<String, MinskValue>) -> Self {
+        Self { variables }
     }
 
-    fn evaluate_expression(root: &BoundExpression) -> MinskValue {
+    pub fn evaluate(&mut self, root: &BoundExpression) -> MinskValue {
+        self.evaluate_expression(root)
+    }
+
+    fn evaluate_expression(&mut self, root: &BoundExpression) -> MinskValue {
         match root {
-            BoundExpression::BoundLiteralExpression(lit) => lit.value.clone(),
-            BoundExpression::BoundUnaryExpression(u) => {
-                let operand = Self::evaluate_expression(&u.operand);
+            BoundExpression::Literal(lit) => lit.value.clone(),
+            BoundExpression::Unary(u) => {
+                let operand = self.evaluate_expression(&u.operand);
                 match u.op.kind {
                     BoundUnaryOperatorKind::Identity => {
                         MinskValue::Integer(operand.as_integer().unwrap())
@@ -29,9 +37,9 @@ impl Evaluator {
                     }
                 }
             }
-            BoundExpression::BoundBinaryExpression(b) => {
-                let left = Self::evaluate_expression(&b.left);
-                let right = Self::evaluate_expression(&b.right);
+            BoundExpression::Binary(b) => {
+                let left = self.evaluate_expression(&b.left);
+                let right = self.evaluate_expression(&b.right);
                 match b.op.kind {
                     BoundBinaryOperatorKind::Addition => MinskValue::Integer(
                         left.as_integer()
@@ -62,6 +70,12 @@ impl Evaluator {
                         left.as_boolean().unwrap() || right.as_boolean().unwrap(),
                     ),
                 }
+            }
+            BoundExpression::Variable(v) => self.variables.get(&v.name).unwrap().clone(),
+            BoundExpression::Assignment(a) => {
+                let value = self.evaluate_expression(&a.expression);
+                self.variables.insert(a.name.clone(), value.clone());
+                value
             }
         }
     }

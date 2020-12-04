@@ -17,6 +17,7 @@ pub(crate) enum SyntaxKind {
     Bang,
     AmpersandAmpersand,
     PipePipe,
+    Equals,
     EqualsEquals,
     BangEquals,
 

@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{
     code_analysis::syntax::expression_syntax::ExpressionSyntax,
     code_analysis::syntax::parenthesized_expression_syntax::ParenthesizedExpressionSyntax,
@@ -5,9 +7,12 @@ use crate::{
     code_analysis::{
         diagnostic::Diagnostic,
         diagnostic_bag::DiagnosticBag,
+        minsk_type::MinskType,
         minsk_value::MinskValue,
+        syntax::assignment_expression_syntax::AssignmentExpressionSyntax,
         syntax::{
             binary_expression_syntax::BinaryExpressionSyntax,
+            name_expression_syntax::NameExpressionSyntax,
             unary_expression_syntax::UnaryExpressionSyntax,
         },
     },
@@ -15,18 +20,22 @@ use crate::{
 
 use super::{
     super::syntax::literal_expression_syntax::LiteralExpressionSyntax,
+    bound_assignment_expression::BoundAssignmentExpression,
     bound_binary_expression::BoundBinaryExpression, bound_binary_operator::BoundBinaryOperator,
     bound_expression::BoundExpression, bound_literal_expression::BoundLiteralExpression,
     bound_unary_expression::BoundUnaryExpression, bound_unary_operator::BoundUnaryOperator,
+    bound_variable_expression::BoundVariableExpression,
 };
 
-pub struct Binder {
+pub struct Binder<'compilation> {
+    variables: &'compilation mut HashMap<String, MinskValue>,
     diagnostics: DiagnosticBag,
 }
 
-impl Binder {
-    pub fn new() -> Self {
+impl<'compilation> Binder<'compilation> {
+    pub fn new(variables: &'compilation mut HashMap<String, MinskValue>) -> Self {
         Self {
+            variables,
             diagnostics: DiagnosticBag::new(),
         }
     }
@@ -42,12 +51,12 @@ impl Binder {
 
     pub(super) fn bind_expression(&mut self, syntax: &ExpressionSyntax) -> BoundExpression {
         match syntax {
-            ExpressionSyntax::LiteralExpressionSyntax(l) => self.bind_literal_expression(l),
-            ExpressionSyntax::UnaryExpressionSyntax(u) => self.bind_unary_expression(u),
-            ExpressionSyntax::BinaryExpressionSyntax(b) => self.bind_binary_expression(b),
-            ExpressionSyntax::ParenthesizedExpressionSyntax(p) => {
-                self.bind_parenthesized_expression(p)
-            }
+            ExpressionSyntax::Literal(l) => self.bind_literal_expression(l),
+            ExpressionSyntax::Unary(u) => self.bind_unary_expression(u),
+            ExpressionSyntax::Binary(b) => self.bind_binary_expression(b),
+            ExpressionSyntax::Parenthesized(p) => self.bind_parenthesized_expression(p),
+            ExpressionSyntax::Name(n) => self.bind_name_expression(n),
+            ExpressionSyntax::Assignment(a) => self.bind_assignment_expression(a),
         }
     }
 
@@ -56,14 +65,14 @@ impl Binder {
             Some(v) => v.clone(),
             None => MinskValue::Integer(0),
         };
-        BoundExpression::BoundLiteralExpression(BoundLiteralExpression { value })
+        BoundExpression::Literal(BoundLiteralExpression { value })
     }
 
     fn bind_unary_expression(&mut self, syntax: &UnaryExpressionSyntax) -> BoundExpression {
         let operand = self.bind_expression(&syntax.operand);
         let operator = BoundUnaryOperator::bind(syntax.operator_token.kind, operand.kind());
         if let Some(op) = operator {
-            BoundExpression::BoundUnaryExpression(BoundUnaryExpression {
+            BoundExpression::Unary(BoundUnaryExpression {
                 op,
                 operand: Box::new(operand),
             })
@@ -83,7 +92,7 @@ impl Binder {
         let operator =
             BoundBinaryOperator::bind(syntax.operator_token.kind, left.kind(), right.kind());
         if let Some(op) = operator {
-            BoundExpression::BoundBinaryExpression(BoundBinaryExpression {
+            BoundExpression::Binary(BoundBinaryExpression {
                 left: Box::new(left),
                 op,
                 right: Box::new(right),
@@ -104,5 +113,35 @@ impl Binder {
         syntax: &ParenthesizedExpressionSyntax,
     ) -> BoundExpression {
         self.bind_expression(&syntax.expression)
+    }
+
+    fn bind_name_expression(&mut self, syntax: &NameExpressionSyntax) -> BoundExpression {
+        let name = &syntax.identifier_token.text;
+        if let Some(value) = self.variables.get(name) {
+            // FIXME use ty here?
+            #[allow(unused_variables)]
+            let ty = value.kind();
+            BoundExpression::Variable(BoundVariableExpression {
+                name: name.to_string(),
+                ty: MinskType::Integer,
+            })
+        } else {
+            self.diagnostics
+                .report_undefined_name(syntax.identifier_token.span.clone(), name);
+            BoundExpression::Literal(BoundLiteralExpression {
+                value: MinskValue::Integer(0),
+            })
+        }
+    }
+
+    fn bind_assignment_expression(
+        &mut self,
+        syntax: &AssignmentExpressionSyntax,
+    ) -> BoundExpression {
+        let bound = self.bind_expression(&syntax.expression);
+        BoundExpression::Assignment(BoundAssignmentExpression {
+            name: syntax.identifier_token.text.clone(),
+            expression: Box::new(bound),
+        })
     }
 }

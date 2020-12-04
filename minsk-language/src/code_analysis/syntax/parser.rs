@@ -2,7 +2,10 @@ use unary_expression_syntax::UnaryExpressionSyntax;
 
 use crate::code_analysis::diagnostic_bag::DiagnosticBag;
 
-use super::super::minsk_value::MinskValue;
+use super::{
+    super::minsk_value::MinskValue, assignment_expression_syntax::AssignmentExpressionSyntax,
+    name_expression_syntax::NameExpressionSyntax,
+};
 
 use super::{
     binary_expression_syntax::BinaryExpressionSyntax, expression_syntax::ExpressionSyntax,
@@ -72,7 +75,7 @@ impl Parser {
     }
 
     pub(super) fn parse(mut self) -> SyntaxTree {
-        let expression = self.parse_expression(0);
+        let expression = self.parse_expression();
         let end_of_file_token = self.match_token(SyntaxKind::EndOfFile);
 
         SyntaxTree {
@@ -82,13 +85,31 @@ impl Parser {
         }
     }
 
-    fn parse_expression(&mut self, parent_precedence: usize) -> ExpressionSyntax {
+    fn parse_expression(&mut self) -> ExpressionSyntax {
+        self.parse_assignment_expression()
+    }
+
+    fn parse_assignment_expression(&mut self) -> ExpressionSyntax {
+        if self.peek(0).kind == SyntaxKind::Identifier && self.peek(1).kind == SyntaxKind::Equals {
+            let identifier_token = self.next_token();
+            let operator_token = self.next_token();
+            let right = self.parse_assignment_expression();
+            return ExpressionSyntax::Assignment(AssignmentExpressionSyntax {
+                identifier_token,
+                equals_token: operator_token,
+                expression: Box::new(right),
+            });
+        }
+        self.parse_binary_expression(0)
+    }
+
+    fn parse_binary_expression(&mut self, parent_precedence: usize) -> ExpressionSyntax {
         let unary_operator_precedence = self.current().kind.unary_operator_precedence();
         let mut left =
             if unary_operator_precedence != 0 && unary_operator_precedence >= parent_precedence {
                 let operator_token = self.next_token();
-                let operand = self.parse_expression(unary_operator_precedence);
-                ExpressionSyntax::UnaryExpressionSyntax(UnaryExpressionSyntax {
+                let operand = self.parse_binary_expression(unary_operator_precedence);
+                ExpressionSyntax::Unary(UnaryExpressionSyntax {
                     operator_token,
                     operand: Box::new(operand),
                 })
@@ -103,8 +124,8 @@ impl Parser {
             }
 
             let operator_token = self.next_token();
-            let right = self.parse_expression(precedence);
-            left = ExpressionSyntax::BinaryExpressionSyntax(BinaryExpressionSyntax {
+            let right = self.parse_binary_expression(precedence);
+            left = ExpressionSyntax::Binary(BinaryExpressionSyntax {
                 left: Box::new(left),
                 operator_token,
                 right: Box::new(right),
@@ -118,9 +139,9 @@ impl Parser {
         match self.current().kind {
             SyntaxKind::OpenParenthesis => {
                 let open_parenthesis_token = self.next_token();
-                let expression = self.parse_expression(0);
+                let expression = self.parse_expression();
                 let close_parenthesis_token = self.match_token(SyntaxKind::CloseParenthesis);
-                ExpressionSyntax::ParenthesizedExpressionSyntax(ParenthesizedExpressionSyntax {
+                ExpressionSyntax::Parenthesized(ParenthesizedExpressionSyntax {
                     open_parenthesis_token,
                     expression: Box::new(expression),
                     close_parenthesis_token,
@@ -131,16 +152,18 @@ impl Parser {
                 let value = Some(MinskValue::Boolean(
                     keyword_token.kind == SyntaxKind::TrueKeyword,
                 ));
-                ExpressionSyntax::LiteralExpressionSyntax(LiteralExpressionSyntax {
+                ExpressionSyntax::Literal(LiteralExpressionSyntax {
                     literal_token: keyword_token,
                     value,
                 })
             }
+            SyntaxKind::Identifier => {
+                let identifier_token = self.next_token();
+                ExpressionSyntax::Name(NameExpressionSyntax { identifier_token })
+            }
             _ => {
                 let literal_token = self.match_token(SyntaxKind::Number);
-                ExpressionSyntax::LiteralExpressionSyntax(LiteralExpressionSyntax::new(
-                    literal_token,
-                ))
+                ExpressionSyntax::Literal(LiteralExpressionSyntax::new(literal_token))
             }
         }
     }

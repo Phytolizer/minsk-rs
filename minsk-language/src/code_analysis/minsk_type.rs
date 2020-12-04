@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
-pub(crate) enum MinskType {
+pub enum MinskType {
     Integer,
     Boolean,
 }

@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use super::minsk_type::MinskType;
+
 #[derive(Debug, Clone, Eq)]
 pub enum MinskValue {
     Integer(i32),
@@ -7,6 +9,13 @@ pub enum MinskValue {
 }
 
 impl MinskValue {
+    pub(crate) fn kind(&self) -> MinskType {
+        match self {
+            MinskValue::Integer(_) => MinskType::Integer,
+            MinskValue::Boolean(_) => MinskType::Boolean,
+        }
+    }
+
     pub(crate) fn is_integer(&self) -> bool {
         match self {
             Self::Integer(_) => true,

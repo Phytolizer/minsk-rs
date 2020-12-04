@@ -1,7 +1,9 @@
+pub(super) mod assignment_expression_syntax;
 pub(super) mod binary_expression_syntax;
 pub(super) mod expression_syntax;
 mod lexer;
 pub(super) mod literal_expression_syntax;
+pub(super) mod name_expression_syntax;
 pub(super) mod parenthesized_expression_syntax;
 mod parser;
 mod syntax_facts;

@@ -4,15 +4,20 @@ use crossterm::{
     ExecutableCommand,
 };
 use minsk_language::code_analysis::{
-    compilation::Compilation, evaluation_result::EvaluationResult, syntax::syntax_tree::SyntaxTree,
+    compilation::Compilation, evaluation_result::EvaluationResult, minsk_value::MinskValue,
+    syntax::syntax_tree::SyntaxTree,
 };
-use std::io::{self, BufRead, BufReader, Write};
+use std::{
+    collections::HashMap,
+    io::{self, BufRead, BufReader, Write},
+};
 
 fn main() -> anyhow::Result<()> {
     let mut stdout = io::stdout();
     let mut reader = BufReader::new(io::stdin());
     let mut line = String::new();
     let mut show_tree = true;
+    let mut variables = HashMap::<String, MinskValue>::new();
 
     loop {
         line.clear();
@@ -46,7 +51,7 @@ fn main() -> anyhow::Result<()> {
         if show_tree {
             println!("{}", tree.root());
         }
-        let evaluation_result = Compilation::evaluate(tree);
+        let evaluation_result = Compilation::evaluate(tree, &mut variables);
         match evaluation_result {
             EvaluationResult::Error(diagnostics) => {
                 for diagnostic in diagnostics {

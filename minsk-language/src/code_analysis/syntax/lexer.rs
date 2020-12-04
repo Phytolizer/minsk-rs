@@ -91,7 +91,13 @@ impl Lexer {
             }
             '&' if self.lookahead() == '&' => self.simple_token(SyntaxKind::AmpersandAmpersand, 2),
             '|' if self.lookahead() == '|' => self.simple_token(SyntaxKind::PipePipe, 2),
-            '=' if self.lookahead() == '=' => self.simple_token(SyntaxKind::EqualsEquals, 2),
+            '=' => {
+                if self.lookahead() == '=' {
+                    self.simple_token(SyntaxKind::EqualsEquals, 2)
+                } else {
+                    self.simple_token(SyntaxKind::Equals, 1)
+                }
+            }
             _ => {
                 self.diagnostics
                     .report_bad_character(self.position, self.current());
