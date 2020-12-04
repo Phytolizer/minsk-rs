@@ -1,22 +1,19 @@
 use crate::{
     code_analysis::syntax::expression_syntax::ExpressionSyntax,
     code_analysis::syntax::parenthesized_expression_syntax::ParenthesizedExpressionSyntax,
-    code_analysis::syntax::syntax_kind::SyntaxKind,
     code_analysis::syntax::syntax_node::SyntaxNode,
     code_analysis::syntax::{
         binary_expression_syntax::BinaryExpressionSyntax,
         unary_expression_syntax::UnaryExpressionSyntax,
     },
-    minsk_type::MinskType,
     minsk_value::MinskValue,
 };
 
 use super::{
     super::syntax::literal_expression_syntax::LiteralExpressionSyntax,
     bound_binary_expression::BoundBinaryExpression, bound_binary_operator::BoundBinaryOperator,
-    bound_binary_operator_kind::BoundBinaryOperatorKind, bound_expression::BoundExpression,
-    bound_literal_expression::BoundLiteralExpression, bound_unary_expression::BoundUnaryExpression,
-    bound_unary_operator::BoundUnaryOperator, bound_unary_operator_kind::BoundUnaryOperatorKind,
+    bound_expression::BoundExpression, bound_literal_expression::BoundLiteralExpression,
+    bound_unary_expression::BoundUnaryExpression, bound_unary_operator::BoundUnaryOperator,
 };
 
 pub(crate) struct Binder {
