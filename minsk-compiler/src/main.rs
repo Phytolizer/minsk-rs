@@ -4,7 +4,8 @@ use crossterm::{
     ExecutableCommand,
 };
 use minsk_language::code_analysis::{
-    binding::binder::Binder, evaluator::Evaluator, syntax::syntax_tree::SyntaxTree,
+    binding::binder::Binder, compilation::Compilation, evaluation_result::EvaluationResult,
+    evaluator::Evaluator, syntax::syntax_tree::SyntaxTree,
 };
 use std::io::{self, BufRead, BufReader, Write};
 
@@ -43,22 +44,21 @@ fn main() -> anyhow::Result<()> {
         }
 
         let tree = SyntaxTree::parse(line.trim().to_string());
-        let mut diagnostics = tree.diagnostics().to_owned();
-        let mut binder = Binder::new();
-        let bound_expression = binder.bind(tree.root());
-        diagnostics.append(&mut binder.diagnostics().to_vec());
         if show_tree {
             println!("{}", tree.root());
         }
-        if diagnostics.len() > 0 {
-            stdout.execute(SetForegroundColor(Color::DarkRed))?;
-            for diagnostic in diagnostics {
-                println!("{}", diagnostic);
+        let evaluation_result = Compilation::evaluate(tree);
+        match evaluation_result {
+            EvaluationResult::Error(diagnostics) => {
+                stdout.execute(SetForegroundColor(Color::DarkRed))?;
+                for diagnostic in diagnostics {
+                    println!("{}", diagnostic);
+                }
+                stdout.execute(ResetColor)?;
             }
-            stdout.execute(ResetColor)?;
-        } else {
-            let result = Evaluator::evaluate(&bound_expression);
-            println!("{}", result);
+            EvaluationResult::Value(value) => {
+                println!("{}", value);
+            }
         }
     }
     Ok(())
