@@ -1,10 +1,10 @@
 use crate::minsk_type::MinskType;
 
-use super::{bound_expression::BoundExpression, bound_unary_operator_kind::BoundUnaryOperatorKind};
+use super::{bound_expression::BoundExpression, bound_unary_operator::BoundUnaryOperator};
 
 #[derive(Debug)]
 pub(crate) struct BoundUnaryExpression {
-    pub(crate) operator_kind: BoundUnaryOperatorKind,
+    pub(crate) op: BoundUnaryOperator,
     pub(crate) operand: Box<BoundExpression>,
 }
 

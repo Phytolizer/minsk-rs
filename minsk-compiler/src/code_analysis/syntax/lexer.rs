@@ -1,10 +1,6 @@
 use crate::minsk_value::MinskValue;
 
-use super::{
-    syntax_facts::{SyntaxFacts, SyntaxFactsExt},
-    syntax_kind::SyntaxKind,
-    syntax_token::SyntaxToken,
-};
+use super::{syntax_facts::SyntaxFacts, syntax_kind::SyntaxKind, syntax_token::SyntaxToken};
 
 pub(super) struct Lexer {
     text: String,

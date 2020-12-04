@@ -17,7 +17,7 @@ impl Evaluator {
             BoundExpression::BoundLiteralExpression(lit) => lit.value.clone(),
             BoundExpression::BoundUnaryExpression(u) => {
                 let operand = Self::evaluate_expression(&u.operand);
-                match u.operator_kind {
+                match u.op.kind {
                     BoundUnaryOperatorKind::Identity => {
                         MinskValue::Integer(operand.as_int().unwrap())
                     }
@@ -32,7 +32,7 @@ impl Evaluator {
             BoundExpression::BoundBinaryExpression(b) => {
                 let left = Self::evaluate_expression(&b.left);
                 let right = Self::evaluate_expression(&b.right);
-                match b.operator_kind {
+                match b.op.kind {
                     BoundBinaryOperatorKind::Addition => {
                         MinskValue::Integer(left.as_int().unwrap() + right.as_int().unwrap())
                     }

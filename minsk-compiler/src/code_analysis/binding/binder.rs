@@ -13,10 +13,10 @@ use crate::{
 
 use super::{
     super::syntax::literal_expression_syntax::LiteralExpressionSyntax,
-    bound_binary_expression::BoundBinaryExpression,
+    bound_binary_expression::BoundBinaryExpression, bound_binary_operator::BoundBinaryOperator,
     bound_binary_operator_kind::BoundBinaryOperatorKind, bound_expression::BoundExpression,
     bound_literal_expression::BoundLiteralExpression, bound_unary_expression::BoundUnaryExpression,
-    bound_unary_operator_kind::BoundUnaryOperatorKind,
+    bound_unary_operator::BoundUnaryOperator, bound_unary_operator_kind::BoundUnaryOperatorKind,
 };
 
 pub(crate) struct Binder {
@@ -60,11 +60,10 @@ impl Binder {
 
     fn bind_unary_expression(&mut self, syntax: &UnaryExpressionSyntax) -> BoundExpression {
         let operand = self.bind_expression(&syntax.operand);
-        let operator_kind =
-            self.bind_unary_operator_kind(syntax.operator_token.kind, operand.kind());
-        if let Some(operator_kind) = operator_kind {
+        let operator = BoundUnaryOperator::bind(syntax.operator_token.kind, operand.kind());
+        if let Some(op) = operator {
             BoundExpression::BoundUnaryExpression(BoundUnaryExpression {
-                operator_kind,
+                op,
                 operand: Box::new(operand),
             })
         } else {
@@ -80,12 +79,12 @@ impl Binder {
     fn bind_binary_expression(&mut self, syntax: &BinaryExpressionSyntax) -> BoundExpression {
         let left = self.bind_expression(&syntax.left);
         let right = self.bind_expression(&syntax.right);
-        let operator_kind =
-            self.bind_binary_operator_kind(syntax.operator_token.kind, left.kind(), right.kind());
-        if let Some(operator_kind) = operator_kind {
+        let operator =
+            BoundBinaryOperator::bind(syntax.operator_token.kind, left.kind(), right.kind());
+        if let Some(op) = operator {
             BoundExpression::BoundBinaryExpression(BoundBinaryExpression {
                 left: Box::new(left),
-                operator_kind,
+                op,
                 right: Box::new(right),
             })
         } else {
@@ -104,49 +103,5 @@ impl Binder {
         syntax: &ParenthesizedExpressionSyntax,
     ) -> BoundExpression {
         self.bind_expression(&syntax.expression)
-    }
-
-    fn bind_unary_operator_kind(
-        &mut self,
-        operator_kind: SyntaxKind,
-        ty: MinskType,
-    ) -> Option<BoundUnaryOperatorKind> {
-        match ty {
-            MinskType::Integer => match operator_kind {
-                SyntaxKind::Plus => return Some(BoundUnaryOperatorKind::Identity),
-                SyntaxKind::Minus => return Some(BoundUnaryOperatorKind::Negation),
-                _ => {}
-            },
-            MinskType::Boolean => match operator_kind {
-                SyntaxKind::Bang => return Some(BoundUnaryOperatorKind::LogicalNegation),
-                _ => {}
-            },
-        }
-        None
-    }
-
-    fn bind_binary_operator_kind(
-        &mut self,
-        operator_kind: SyntaxKind,
-        left_ty: MinskType,
-        right_ty: MinskType,
-    ) -> Option<BoundBinaryOperatorKind> {
-        if left_ty == MinskType::Integer && right_ty == MinskType::Integer {
-            match operator_kind {
-                SyntaxKind::Plus => return Some(BoundBinaryOperatorKind::Addition),
-                SyntaxKind::Minus => return Some(BoundBinaryOperatorKind::Subtraction),
-                SyntaxKind::Star => return Some(BoundBinaryOperatorKind::Multiplication),
-                SyntaxKind::Slash => return Some(BoundBinaryOperatorKind::Division),
-                _ => {}
-            }
-        }
-        if left_ty == MinskType::Boolean && right_ty == MinskType::Boolean {
-            match operator_kind {
-                SyntaxKind::AmpersandAmpersand => return Some(BoundBinaryOperatorKind::LogicalAnd),
-                SyntaxKind::PipePipe => return Some(BoundBinaryOperatorKind::LogicalOr),
-                _ => {}
-            }
-        }
-        None
     }
 }
