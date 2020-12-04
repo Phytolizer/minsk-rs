@@ -81,6 +81,10 @@ impl Parser {
     }
 
     fn parse_expression(&mut self) -> ExpressionSyntax {
+        self.parse_term()
+    }
+
+    fn parse_term(&mut self) -> ExpressionSyntax {
         let mut left = self.parse_factor();
 
         while self.current().kind == SyntaxKind::Plus || self.current().kind == SyntaxKind::Minus {
