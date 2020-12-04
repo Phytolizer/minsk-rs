@@ -7,6 +7,7 @@ use super::{syntax_facts::SyntaxFacts, syntax_kind::SyntaxKind, syntax_token::Sy
 
 pub(super) struct Lexer {
     text: String,
+    start: usize,
     position: usize,
     diagnostics: DiagnosticBag,
 }
@@ -15,6 +16,7 @@ impl Lexer {
     pub(super) fn new(text: String) -> Self {
         Self {
             text,
+            start: 0,
             position: 0,
             diagnostics: DiagnosticBag::new(),
         }
@@ -35,20 +37,20 @@ impl Lexer {
     }
 
     pub(crate) fn next_token(&mut self) -> SyntaxToken {
+        self.start = self.position;
         match self.current() {
             '\0' => SyntaxToken::new(SyntaxKind::EndOfFile, self.position, String::new(), None),
             d if d.is_numeric() => {
-                let start = self.position;
                 while self.current().is_numeric() {
                     self.next();
                 }
-                let text = &self.text[start..self.position];
+                let text = &self.text[self.start..self.position];
                 let value = match text.parse::<i32>() {
                     Ok(i) => Some(MinskValue::Integer(i)),
                     Err(_) => {
                         self.diagnostics.report_invalid_number(
                             TextSpan {
-                                start,
+                                start: self.start,
                                 end: self.position,
                             },
                             text,
@@ -57,24 +59,22 @@ impl Lexer {
                         None
                     }
                 };
-                SyntaxToken::new(SyntaxKind::Number, start, text.to_string(), value)
+                SyntaxToken::new(SyntaxKind::Number, self.start, text.to_string(), value)
             }
             w if w.is_whitespace() => {
-                let start = self.position;
                 while self.current().is_whitespace() {
                     self.next();
                 }
-                let text = &self.text[start..self.position];
-                SyntaxToken::new(SyntaxKind::Whitespace, start, text.to_string(), None)
+                let text = &self.text[self.start..self.position];
+                SyntaxToken::new(SyntaxKind::Whitespace, self.start, text.to_string(), None)
             }
             l if l.is_alphabetic() => {
-                let start = self.position;
                 while self.current().is_alphabetic() {
                     self.next();
                 }
-                let text = &self.text[start..self.position];
+                let text = &self.text[self.start..self.position];
                 let kind = SyntaxFacts::keyword_kind(text);
-                SyntaxToken::new(kind, start, text.to_string(), None)
+                SyntaxToken::new(kind, self.start, text.to_string(), None)
             }
             '+' => self.simple_token(SyntaxKind::Plus, 1),
             '-' => self.simple_token(SyntaxKind::Minus, 1),
@@ -104,7 +104,7 @@ impl Lexer {
         self.position += size;
         SyntaxToken::new(
             kind,
-            self.position - size,
+            self.start,
             self.text[self.position - size..self.position].to_string(),
             None,
         )
