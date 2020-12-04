@@ -14,6 +14,9 @@ pub(crate) enum SyntaxKind {
     Minus,
     Star,
     Slash,
+    Bang,
+    AmpersandAmpersand,
+    PipePipe,
 
     OpenParenthesis,
     CloseParenthesis,

@@ -111,14 +111,18 @@ impl Binder {
         operator_kind: SyntaxKind,
         ty: MinskType,
     ) -> Option<BoundUnaryOperatorKind> {
-        if ty != MinskType::Integer {
-            return None;
+        match ty {
+            MinskType::Integer => match operator_kind {
+                SyntaxKind::Plus => return Some(BoundUnaryOperatorKind::Identity),
+                SyntaxKind::Minus => return Some(BoundUnaryOperatorKind::Negation),
+                _ => {}
+            },
+            MinskType::Boolean => match operator_kind {
+                SyntaxKind::Bang => return Some(BoundUnaryOperatorKind::LogicalNegation),
+                _ => {}
+            },
         }
-        match operator_kind {
-            SyntaxKind::Plus => Some(BoundUnaryOperatorKind::Identity),
-            SyntaxKind::Minus => Some(BoundUnaryOperatorKind::Negation),
-            _ => panic!("Unexpected unary operator {}", operator_kind),
-        }
+        None
     }
 
     fn bind_binary_operator_kind(
@@ -127,15 +131,22 @@ impl Binder {
         left_ty: MinskType,
         right_ty: MinskType,
     ) -> Option<BoundBinaryOperatorKind> {
-        if left_ty != MinskType::Integer || right_ty != MinskType::Integer {
-            return None;
+        if left_ty == MinskType::Integer && right_ty == MinskType::Integer {
+            match operator_kind {
+                SyntaxKind::Plus => return Some(BoundBinaryOperatorKind::Addition),
+                SyntaxKind::Minus => return Some(BoundBinaryOperatorKind::Subtraction),
+                SyntaxKind::Star => return Some(BoundBinaryOperatorKind::Multiplication),
+                SyntaxKind::Slash => return Some(BoundBinaryOperatorKind::Division),
+                _ => {}
+            }
         }
-        match operator_kind {
-            SyntaxKind::Plus => Some(BoundBinaryOperatorKind::Addition),
-            SyntaxKind::Minus => Some(BoundBinaryOperatorKind::Subtraction),
-            SyntaxKind::Star => Some(BoundBinaryOperatorKind::Multiplication),
-            SyntaxKind::Slash => Some(BoundBinaryOperatorKind::Division),
-            _ => panic!("Unexpected binary operator {}", operator_kind),
+        if left_ty == MinskType::Boolean && right_ty == MinskType::Boolean {
+            match operator_kind {
+                SyntaxKind::AmpersandAmpersand => return Some(BoundBinaryOperatorKind::LogicalAnd),
+                SyntaxKind::PipePipe => return Some(BoundBinaryOperatorKind::LogicalOr),
+                _ => {}
+            }
         }
+        None
     }
 }

@@ -16,20 +16,41 @@ impl Evaluator {
         match root {
             BoundExpression::BoundLiteralExpression(lit) => lit.value.clone(),
             BoundExpression::BoundUnaryExpression(u) => {
-                let operand = Self::evaluate_expression(&u.operand).as_int().unwrap();
+                let operand = Self::evaluate_expression(&u.operand);
                 match u.operator_kind {
-                    BoundUnaryOperatorKind::Identity => MinskValue::Integer(operand),
-                    BoundUnaryOperatorKind::Negation => MinskValue::Integer(-operand),
+                    BoundUnaryOperatorKind::Identity => {
+                        MinskValue::Integer(operand.as_int().unwrap())
+                    }
+                    BoundUnaryOperatorKind::Negation => {
+                        MinskValue::Integer(-operand.as_int().unwrap())
+                    }
+                    BoundUnaryOperatorKind::LogicalNegation => {
+                        MinskValue::Boolean(!operand.as_boolean().unwrap())
+                    }
                 }
             }
             BoundExpression::BoundBinaryExpression(b) => {
-                let left = Self::evaluate_expression(&b.left).as_int().unwrap();
-                let right = Self::evaluate_expression(&b.right).as_int().unwrap();
+                let left = Self::evaluate_expression(&b.left);
+                let right = Self::evaluate_expression(&b.right);
                 match b.operator_kind {
-                    BoundBinaryOperatorKind::Addition => MinskValue::Integer(left + right),
-                    BoundBinaryOperatorKind::Subtraction => MinskValue::Integer(left - right),
-                    BoundBinaryOperatorKind::Multiplication => MinskValue::Integer(left * right),
-                    BoundBinaryOperatorKind::Division => MinskValue::Integer(left / right),
+                    BoundBinaryOperatorKind::Addition => {
+                        MinskValue::Integer(left.as_int().unwrap() + right.as_int().unwrap())
+                    }
+                    BoundBinaryOperatorKind::Subtraction => {
+                        MinskValue::Integer(left.as_int().unwrap() - right.as_int().unwrap())
+                    }
+                    BoundBinaryOperatorKind::Multiplication => {
+                        MinskValue::Integer(left.as_int().unwrap() * right.as_int().unwrap())
+                    }
+                    BoundBinaryOperatorKind::Division => {
+                        MinskValue::Integer(left.as_int().unwrap() / right.as_int().unwrap())
+                    }
+                    BoundBinaryOperatorKind::LogicalAnd => MinskValue::Boolean(
+                        left.as_boolean().unwrap() && right.as_boolean().unwrap(),
+                    ),
+                    BoundBinaryOperatorKind::LogicalOr => MinskValue::Boolean(
+                        left.as_boolean().unwrap() || right.as_boolean().unwrap(),
+                    ),
                 }
             }
         }

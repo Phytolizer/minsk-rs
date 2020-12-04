@@ -21,6 +21,9 @@ impl Lexer {
         }
     }
 
+    fn lookahead(&self) -> char {
+        self.text.chars().nth(self.position + 1).unwrap_or('\0')
+    }
     fn current(&self) -> char {
         self.text.chars().nth(self.position).unwrap_or('\0')
     }
@@ -96,6 +99,9 @@ impl Lexer {
             '/' => self.simple_token(SyntaxKind::Slash, 1),
             '(' => self.simple_token(SyntaxKind::OpenParenthesis, 1),
             ')' => self.simple_token(SyntaxKind::CloseParenthesis, 1),
+            '!' => self.simple_token(SyntaxKind::Bang, 1),
+            '&' if self.lookahead() == '&' => self.simple_token(SyntaxKind::AmpersandAmpersand, 2),
+            '|' if self.lookahead() == '|' => self.simple_token(SyntaxKind::PipePipe, 2),
             _ => {
                 self.diagnostics
                     .push(format!("ERROR: bad character input: {}", self.current()));
