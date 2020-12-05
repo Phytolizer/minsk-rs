@@ -45,10 +45,8 @@ impl<'compilation> Binder<'compilation> {
     }
 
     pub fn bind(&mut self, syntax: &SyntaxNode) -> BoundExpression {
-        if let SyntaxNode::ExpressionSyntax(e) = syntax {
-            self.bind_expression(e)
-        } else {
-            panic!("invalid root node")
+        match syntax {
+            SyntaxNode::ExpressionSyntax(e) => self.bind_expression(e),
         }
     }
 
