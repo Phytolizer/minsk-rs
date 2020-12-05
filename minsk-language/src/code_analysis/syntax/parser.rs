@@ -185,6 +185,79 @@ mod tests {
     use strum::IntoEnumIterator;
     use syntax_facts::{SyntaxFacts, SyntaxFactsExt};
 
+    fn unary_expression_honors_precedences_helper(unary_kind: SyntaxKind, binary_kind: SyntaxKind) {
+        let op1_precedence = unary_kind.unary_operator_precedence();
+        let op2_precedence = binary_kind.binary_operator_precedence();
+
+        let op1_text = SyntaxFacts::get_text(unary_kind).unwrap();
+        let op2_text = SyntaxFacts::get_text(binary_kind).unwrap();
+        let text = format!("{}a{}b", op1_text, op2_text);
+
+        if op1_precedence >= op2_precedence {
+            assert_eq!(
+                &SyntaxNode::ExpressionSyntax(ExpressionSyntax::Binary(BinaryExpressionSyntax {
+                    left: Box::new(ExpressionSyntax::Unary(UnaryExpressionSyntax {
+                        operator_token: SyntaxToken::new(
+                            unary_kind,
+                            0,
+                            String::from(op1_text),
+                            None
+                        ),
+                        operand: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
+                            identifier_token: SyntaxToken::new(
+                                SyntaxKind::Identifier,
+                                1,
+                                String::from("a"),
+                                None,
+                            ),
+                        })),
+                    })),
+                    operator_token: SyntaxToken::new(binary_kind, 2, String::from(op2_text), None),
+                    right: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
+                        identifier_token: SyntaxToken::new(
+                            SyntaxKind::Identifier,
+                            3,
+                            String::from("b"),
+                            None
+                        ),
+                    }))
+                })),
+                SyntaxTree::parse(text).root()
+            )
+        } else {
+            assert_eq!(
+                &SyntaxNode::ExpressionSyntax(ExpressionSyntax::Unary(UnaryExpressionSyntax {
+                    operator_token: SyntaxToken::new(unary_kind, 0, String::from(op1_text), None),
+                    operand: Box::new(ExpressionSyntax::Binary(BinaryExpressionSyntax {
+                        left: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
+                            identifier_token: SyntaxToken::new(
+                                SyntaxKind::Identifier,
+                                1,
+                                String::from("a"),
+                                None
+                            )
+                        })),
+                        operator_token: SyntaxToken::new(
+                            binary_kind,
+                            2,
+                            String::from(op2_text),
+                            None
+                        ),
+                        right: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
+                            identifier_token: SyntaxToken::new(
+                                SyntaxKind::Identifier,
+                                3,
+                                String::from("b"),
+                                None
+                            ),
+                        }))
+                    }))
+                })),
+                SyntaxTree::parse(text).root()
+            )
+        }
+    }
+
     fn binary_expression_honors_precedences_helper(op1: SyntaxKind, op2: SyntaxKind) {
         let op1_precedence = op1.binary_operator_precedence();
         let op2_precedence = op2.binary_operator_precedence();
@@ -271,6 +344,13 @@ mod tests {
         }
     }
 
+    #[test]
+    fn unary_expression_honors_precedences() {
+        for (unary, binary) in get_unary_operator_pairs() {
+            unary_expression_honors_precedences_helper(unary, binary);
+        }
+    }
+
     fn get_unary_operators() -> Vec<SyntaxKind> {
         SyntaxKind::iter()
             .filter(|k| k.unary_operator_precedence() > 0)
@@ -285,6 +365,14 @@ mod tests {
 
     fn get_binary_operator_pairs() -> Vec<(SyntaxKind, SyntaxKind)> {
         get_binary_operators()
+            .iter()
+            .cloned()
+            .cartesian_product(get_binary_operators())
+            .collect()
+    }
+
+    fn get_unary_operator_pairs() -> Vec<(SyntaxKind, SyntaxKind)> {
+        get_unary_operators()
             .iter()
             .cloned()
             .cartesian_product(get_binary_operators())
