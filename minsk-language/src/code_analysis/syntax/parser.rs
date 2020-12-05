@@ -172,3 +172,13 @@ impl Parser {
         self.diagnostics
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn binary_expression_honors_precedences_helper(op1: SyntaxKind, op2: SyntaxKind) {}
+
+    #[test]
+    fn binary_expression_honors_precedences() {}
+}
