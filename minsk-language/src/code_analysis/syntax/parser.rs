@@ -175,10 +175,119 @@ impl Parser {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::code_analysis::syntax::{
+        name_expression_syntax::NameExpressionSyntax, syntax_facts,
+    };
 
-    fn binary_expression_honors_precedences_helper(op1: SyntaxKind, op2: SyntaxKind) {}
+    use super::*;
+    use itertools::Itertools;
+    use pretty_assertions::assert_eq;
+    use strum::IntoEnumIterator;
+    use syntax_facts::{SyntaxFacts, SyntaxFactsExt};
+
+    fn binary_expression_honors_precedences_helper(op1: SyntaxKind, op2: SyntaxKind) {
+        let op1_precedence = op1.binary_operator_precedence();
+        let op2_precedence = op2.binary_operator_precedence();
+
+        let op1_text = SyntaxFacts::get_text(op1).unwrap();
+        let op2_text = SyntaxFacts::get_text(op2).unwrap();
+        let text = format!("a{}b{}c", op1_text, op2_text);
+
+        if op1_precedence >= op2_precedence {
+            assert_eq!(
+                &SyntaxNode::ExpressionSyntax(ExpressionSyntax::Binary(BinaryExpressionSyntax {
+                    left: Box::new(ExpressionSyntax::Binary(BinaryExpressionSyntax {
+                        left: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
+                            identifier_token: SyntaxToken::new(
+                                SyntaxKind::Identifier,
+                                0,
+                                String::from("a"),
+                                None,
+                            ),
+                        })),
+                        operator_token: SyntaxToken::new(op1, 1, String::from(op1_text), None),
+                        right: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
+                            identifier_token: SyntaxToken::new(
+                                SyntaxKind::Identifier,
+                                2,
+                                String::from("b"),
+                                None
+                            ),
+                        }))
+                    })),
+                    operator_token: SyntaxToken::new(op2, 3, String::from(op2_text), None),
+                    right: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
+                        identifier_token: SyntaxToken::new(
+                            SyntaxKind::Identifier,
+                            4,
+                            String::from("c"),
+                            None
+                        ),
+                    }))
+                })),
+                SyntaxTree::parse(text).root()
+            )
+        } else {
+            assert_eq!(
+                &SyntaxNode::ExpressionSyntax(ExpressionSyntax::Binary(BinaryExpressionSyntax {
+                    left: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
+                        identifier_token: SyntaxToken::new(
+                            SyntaxKind::Identifier,
+                            0,
+                            String::from("a"),
+                            None,
+                        ),
+                    })),
+                    operator_token: SyntaxToken::new(op1, 1, String::from(op1_text), None),
+                    right: Box::new(ExpressionSyntax::Binary(BinaryExpressionSyntax {
+                        left: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
+                            identifier_token: SyntaxToken::new(
+                                SyntaxKind::Identifier,
+                                2,
+                                String::from("b"),
+                                None
+                            )
+                        })),
+                        operator_token: SyntaxToken::new(op2, 3, String::from(op2_text), None),
+                        right: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
+                            identifier_token: SyntaxToken::new(
+                                SyntaxKind::Identifier,
+                                4,
+                                String::from("c"),
+                                None
+                            ),
+                        }))
+                    }))
+                })),
+                SyntaxTree::parse(text).root()
+            )
+        }
+    }
 
     #[test]
-    fn binary_expression_honors_precedences() {}
+    fn binary_expression_honors_precedences() {
+        for (op1, op2) in get_binary_operator_pairs() {
+            binary_expression_honors_precedences_helper(op1, op2);
+        }
+    }
+
+    fn get_unary_operators() -> Vec<SyntaxKind> {
+        SyntaxKind::iter()
+            .filter(|k| k.unary_operator_precedence() > 0)
+            .collect()
+    }
+
+    fn get_binary_operators() -> Vec<SyntaxKind> {
+        SyntaxKind::iter()
+            .filter(|k| k.binary_operator_precedence() > 0)
+            .collect()
+    }
+
+    fn get_binary_operator_pairs() -> Vec<(SyntaxKind, SyntaxKind)> {
+        get_binary_operators()
+            .iter()
+            .cloned()
+            .cartesian_product(get_binary_operators())
+            .collect()
+    }
 }

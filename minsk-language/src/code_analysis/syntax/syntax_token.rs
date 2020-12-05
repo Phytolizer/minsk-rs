@@ -44,3 +44,9 @@ impl Display for SyntaxToken {
         Ok(())
     }
 }
+
+impl PartialEq for SyntaxToken {
+    fn eq(&self, other: &Self) -> bool {
+        self.text == other.text && self.kind == other.kind
+    }
+}

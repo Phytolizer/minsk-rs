@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use super::{expression_syntax::ExpressionSyntax, syntax_token::SyntaxToken};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct AssignmentExpressionSyntax {
     pub(crate) identifier_token: SyntaxToken,
     pub(crate) equals_token: SyntaxToken,

@@ -27,6 +27,7 @@ impl SyntaxFacts {
             SyntaxKind::AmpersandAmpersand => Some("&&"),
             SyntaxKind::PipePipe => Some("||"),
             SyntaxKind::EqualsEquals => Some("=="),
+            SyntaxKind::BangEquals => Some("!="),
             SyntaxKind::OpenParenthesis => Some("("),
             SyntaxKind::CloseParenthesis => Some(")"),
             SyntaxKind::FalseKeyword => Some("false"),
