@@ -83,10 +83,7 @@ impl<'compilation> Evaluator<'compilation> {
 
 #[cfg(test)]
 mod tests {
-    use crate::code_analysis::{
-        compilation::Compilation, evaluation_result::EvaluationResult,
-        syntax::syntax_tree::SyntaxTree,
-    };
+    use crate::code_analysis::{compilation::Compilation, syntax::syntax_tree::SyntaxTree};
 
     use super::*;
     use spectral::prelude::*;
@@ -98,15 +95,9 @@ mod tests {
             variables
         });
 
-        asserting!("no errors")
-            .that(&actual)
-            .matches(|r| matches!(r, EvaluationResult::Value(_)));
-        let actual = match actual {
-            EvaluationResult::Value(v) => v,
-            _ => unreachable!(),
-        };
         asserting!("evaluated value")
             .that(&actual)
+            .is_ok()
             .is_equal_to(&expected);
     }
 

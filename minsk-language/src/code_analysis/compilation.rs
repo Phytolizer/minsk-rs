@@ -17,9 +17,9 @@ impl Compilation {
         let mut diagnostics = syntax.diagnostics().collect::<Vec<_>>();
         diagnostics.append(&mut binder.diagnostics().collect());
         if !diagnostics.is_empty() {
-            return EvaluationResult::Error(diagnostics);
+            return Err(diagnostics);
         }
         let value = Evaluator::new(variables).evaluate(&bound_expression);
-        EvaluationResult::Value(value)
+        Ok(value)
     }
 }

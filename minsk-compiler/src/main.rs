@@ -4,8 +4,8 @@ use crossterm::{
     ExecutableCommand,
 };
 use minsk_language::code_analysis::{
-    compilation::Compilation, evaluation_result::EvaluationResult, minsk_value::MinskValue,
-    syntax::syntax_tree::SyntaxTree, variable_symbol::VariableSymbol,
+    compilation::Compilation, minsk_value::MinskValue, syntax::syntax_tree::SyntaxTree,
+    variable_symbol::VariableSymbol,
 };
 use std::{
     collections::HashMap,
@@ -53,7 +53,7 @@ fn main() -> anyhow::Result<()> {
         }
         let evaluation_result = Compilation::evaluate(tree, &mut variables);
         match evaluation_result {
-            EvaluationResult::Error(diagnostics) => {
+            Err(diagnostics) => {
                 for diagnostic in diagnostics {
                     println!();
                     stdout.execute(SetForegroundColor(Color::DarkRed))?;
@@ -70,7 +70,7 @@ fn main() -> anyhow::Result<()> {
                     println!("{}", suffix);
                 }
             }
-            EvaluationResult::Value(value) => {
+            Ok(value) => {
                 println!("{}", value);
             }
         }
