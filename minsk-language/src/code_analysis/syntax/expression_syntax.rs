@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::code_analysis::text_span::TextSpan;
+use crate::code_analysis::text::text_span::TextSpan;
 
 use super::{
     assignment_expression_syntax::AssignmentExpressionSyntax,

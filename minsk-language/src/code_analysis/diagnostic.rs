@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use super::text_span::TextSpan;
+use super::text::text_span::TextSpan;
 
 #[derive(Debug, Clone)]
 pub struct Diagnostic {

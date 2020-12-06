@@ -1,5 +1,5 @@
 use crate::code_analysis::{
-    diagnostic_bag::DiagnosticBag, minsk_type::MinskType, text_span::TextSpan,
+    diagnostic_bag::DiagnosticBag, minsk_type::MinskType, text::text_span::TextSpan,
 };
 
 use super::super::minsk_value::MinskValue;
