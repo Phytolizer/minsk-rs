@@ -1,7 +1,7 @@
 use std::fmt::Display;
 use strum::EnumIter;
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, EnumIter)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, EnumIter, Hash)]
 pub(crate) enum SyntaxKind {
     // Tokens
     EndOfFile,

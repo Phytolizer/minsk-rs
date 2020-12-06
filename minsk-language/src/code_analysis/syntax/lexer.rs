@@ -155,6 +155,9 @@ impl Lexer {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashSet;
+    use std::iter::FromIterator;
+
     use crate::code_analysis::syntax::syntax_tree::SyntaxTree;
     use itertools::Itertools;
     use spectral::prelude::*;
@@ -311,6 +314,28 @@ mod tests {
         }
 
         false
+    }
+
+    #[test]
+    fn tests_all_token_kinds() {
+        let all_token_kinds = HashSet::<SyntaxKind>::from_iter(SyntaxKind::iter());
+        let tested_token_kinds = HashSet::from_iter(
+            get_tokens()
+                .iter()
+                .cloned()
+                .chain(get_separators())
+                .map(|(k, _)| k),
+        );
+
+        let mut untested_token_kinds = HashSet::<SyntaxKind>::from_iter(
+            all_token_kinds.difference(&tested_token_kinds).cloned(),
+        );
+        untested_token_kinds.remove(&SyntaxKind::BadToken);
+        untested_token_kinds.remove(&SyntaxKind::EndOfFile);
+
+        asserting!("all tokens tested")
+            .that(&untested_token_kinds)
+            .is_equal_to(HashSet::<SyntaxKind>::new());
     }
 
     #[test]
