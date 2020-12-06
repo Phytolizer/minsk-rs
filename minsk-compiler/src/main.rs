@@ -58,7 +58,7 @@ fn main() -> anyhow::Result<()> {
         let text = text_builder.clone();
         let tree = SyntaxTree::parse(text.clone());
 
-        if tree.diagnostics().count() > 0 {
+        if !line.trim().is_empty() && tree.diagnostics().count() > 0 {
             continue;
         }
         if show_tree {
