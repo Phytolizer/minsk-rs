@@ -3,21 +3,31 @@ use crate::code_analysis::{
 };
 
 use super::{
-    lexer::Lexer, parser::Parser, syntax_kind::SyntaxKind, syntax_node::SyntaxNode,
+    compilation_unit::CompilationUnit, lexer::Lexer, parser::Parser, syntax_kind::SyntaxKind,
     syntax_token::SyntaxToken,
 };
 
 #[derive(Debug)]
 pub struct SyntaxTree {
-    pub text: SourceText,
-    pub(super) root: SyntaxNode,
-    pub(super) end_of_file_token: SyntaxToken,
-    pub(super) diagnostics: DiagnosticBag,
+    text: SourceText,
+    root: CompilationUnit,
+    diagnostics: DiagnosticBag,
 }
 
 impl SyntaxTree {
+    fn new(text: SourceText) -> Self {
+        let mut parser = Parser::new(text.clone());
+        let root = parser.parse_compilation_unit();
+        let diagnostics = parser.diagnostics();
+        Self {
+            text,
+            root,
+            diagnostics,
+        }
+    }
+
     pub fn parse<ST: Into<SourceText>>(text: ST) -> Self {
-        Parser::new(text.into()).parse()
+        Self::new(text.into())
     }
 
     pub fn parse_tokens<ST: Into<SourceText>>(text: ST) -> Vec<SyntaxToken> {
@@ -37,7 +47,11 @@ impl SyntaxTree {
         self.diagnostics.iter()
     }
 
-    pub fn root(&self) -> &SyntaxNode {
+    pub fn root(&self) -> &CompilationUnit {
         &self.root
+    }
+
+    pub fn text(&self) -> &SourceText {
+        &self.text
     }
 }

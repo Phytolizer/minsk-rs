@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use crate::{
     code_analysis::syntax::expression_syntax::ExpressionSyntax,
     code_analysis::syntax::parenthesized_expression_syntax::ParenthesizedExpressionSyntax,
-    code_analysis::syntax::syntax_node::SyntaxNode,
     code_analysis::{
         diagnostic::Diagnostic,
         diagnostic_bag::DiagnosticBag,
@@ -44,10 +43,8 @@ impl<'compilation> Binder<'compilation> {
         self.diagnostics.iter()
     }
 
-    pub fn bind(&mut self, syntax: &SyntaxNode) -> BoundExpression {
-        match syntax {
-            SyntaxNode::ExpressionSyntax(e) => self.bind_expression(e),
-        }
+    pub fn bind(&mut self, syntax: &ExpressionSyntax) -> BoundExpression {
+        self.bind_expression(syntax)
     }
 
     pub(super) fn bind_expression(&mut self, syntax: &ExpressionSyntax) -> BoundExpression {

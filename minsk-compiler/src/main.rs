@@ -70,27 +70,27 @@ fn main() -> anyhow::Result<()> {
         let evaluation_result = Compilation::evaluate(&tree, &mut variables);
         match evaluation_result {
             Err(diagnostics) => {
-                let text = &tree.text;
+                let text = tree.text();
                 for diagnostic in diagnostics {
                     let line_index = text.get_line_index(diagnostic.span.start).unwrap();
                     let line_number = line_index + 1;
-                    let line = tree.text.lines()[line_index];
+                    let line = tree.text().lines()[line_index];
                     let character = diagnostic.span.start - text.lines()[line_index].start() + 1;
                     println!();
                     stdout.execute(SetForegroundColor(Color::DarkRed))?;
                     print!("({}, {}): ", line_number, character);
                     println!("{}", diagnostic);
                     stdout.execute(ResetColor)?;
-                    let prefix = &tree.text[TextSpan {
+                    let prefix = &tree.text()[TextSpan {
                         start: line.start(),
                         end: diagnostic.span.start,
                     }]
                     .iter()
                     .collect::<String>();
-                    let error = &tree.text[diagnostic.span.clone()]
+                    let error = &tree.text()[diagnostic.span.clone()]
                         .iter()
                         .collect::<String>();
-                    let suffix = &tree.text[TextSpan {
+                    let suffix = &tree.text()[TextSpan {
                         start: diagnostic.span.end,
                         end: line.end(),
                     }]

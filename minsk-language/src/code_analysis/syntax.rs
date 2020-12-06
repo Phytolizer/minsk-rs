@@ -1,5 +1,6 @@
 pub(super) mod assignment_expression_syntax;
 pub(super) mod binary_expression_syntax;
+pub mod compilation_unit;
 pub(super) mod expression_syntax;
 mod lexer;
 pub(super) mod literal_expression_syntax;

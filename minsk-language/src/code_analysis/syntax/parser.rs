@@ -4,19 +4,17 @@ use crate::code_analysis::{diagnostic_bag::DiagnosticBag, text::source_text::Sou
 
 use super::{
     super::minsk_value::MinskValue, assignment_expression_syntax::AssignmentExpressionSyntax,
-    name_expression_syntax::NameExpressionSyntax,
+    compilation_unit::CompilationUnit, name_expression_syntax::NameExpressionSyntax,
 };
 
 use super::{
     binary_expression_syntax::BinaryExpressionSyntax, expression_syntax::ExpressionSyntax,
     lexer::Lexer, literal_expression_syntax::LiteralExpressionSyntax,
     parenthesized_expression_syntax::ParenthesizedExpressionSyntax, syntax_facts::SyntaxFactsExt,
-    syntax_kind::SyntaxKind, syntax_node::SyntaxNode, syntax_token::SyntaxToken,
-    syntax_tree::SyntaxTree, unary_expression_syntax,
+    syntax_kind::SyntaxKind, syntax_token::SyntaxToken, unary_expression_syntax,
 };
 
 pub(super) struct Parser {
-    text: SourceText,
     tokens: Vec<SyntaxToken>,
     position: usize,
     diagnostics: DiagnosticBag,
@@ -37,7 +35,6 @@ impl Parser {
             }
         }
         Self {
-            text,
             tokens,
             position: 0,
             diagnostics: lexer.diagnostics(),
@@ -76,15 +73,12 @@ impl Parser {
         }
     }
 
-    pub(super) fn parse(mut self) -> SyntaxTree {
+    pub fn parse_compilation_unit(&mut self) -> CompilationUnit {
         let expression = self.parse_expression();
         let end_of_file_token = self.match_token(SyntaxKind::EndOfFile);
-
-        SyntaxTree {
-            text: self.text,
-            root: SyntaxNode::ExpressionSyntax(expression),
+        CompilationUnit {
+            root: expression,
             end_of_file_token,
-            diagnostics: self.diagnostics,
         }
     }
 
@@ -181,12 +175,16 @@ impl Parser {
         let literal_token = self.match_token(SyntaxKind::Number);
         ExpressionSyntax::Literal(LiteralExpressionSyntax::new(literal_token))
     }
+
+    pub fn diagnostics(self) -> DiagnosticBag {
+        self.diagnostics
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use crate::code_analysis::syntax::{
-        name_expression_syntax::NameExpressionSyntax, syntax_facts,
+        name_expression_syntax::NameExpressionSyntax, syntax_facts, syntax_tree::SyntaxTree,
     };
 
     use super::*;
@@ -205,24 +203,47 @@ mod tests {
 
         if op1_precedence >= op2_precedence {
             asserting!("syntax tree")
-                .that(SyntaxTree::parse(text).root())
-                .is_equal_to(&SyntaxNode::ExpressionSyntax(ExpressionSyntax::Binary(
-                    BinaryExpressionSyntax {
-                        left: Box::new(ExpressionSyntax::Unary(UnaryExpressionSyntax {
-                            operator_token: SyntaxToken::new(
-                                unary_kind,
-                                0,
-                                String::from(op1_text),
+                .that(&SyntaxTree::parse(text).root().root)
+                .is_equal_to(&ExpressionSyntax::Binary(BinaryExpressionSyntax {
+                    left: Box::new(ExpressionSyntax::Unary(UnaryExpressionSyntax {
+                        operator_token: SyntaxToken::new(
+                            unary_kind,
+                            0,
+                            String::from(op1_text),
+                            None,
+                        ),
+                        operand: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
+                            identifier_token: SyntaxToken::new(
+                                SyntaxKind::Identifier,
+                                1,
+                                String::from("a"),
                                 None,
                             ),
-                            operand: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
-                                identifier_token: SyntaxToken::new(
-                                    SyntaxKind::Identifier,
-                                    1,
-                                    String::from("a"),
-                                    None,
-                                ),
-                            })),
+                        })),
+                    })),
+                    operator_token: SyntaxToken::new(binary_kind, 2, String::from(op2_text), None),
+                    right: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
+                        identifier_token: SyntaxToken::new(
+                            SyntaxKind::Identifier,
+                            3,
+                            String::from("b"),
+                            None,
+                        ),
+                    })),
+                }));
+        } else {
+            asserting!("syntax tree")
+                .that(&SyntaxTree::parse(text).root().root)
+                .is_equal_to(&ExpressionSyntax::Unary(UnaryExpressionSyntax {
+                    operator_token: SyntaxToken::new(unary_kind, 0, String::from(op1_text), None),
+                    operand: Box::new(ExpressionSyntax::Binary(BinaryExpressionSyntax {
+                        left: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
+                            identifier_token: SyntaxToken::new(
+                                SyntaxKind::Identifier,
+                                1,
+                                String::from("a"),
+                                None,
+                            ),
                         })),
                         operator_token: SyntaxToken::new(
                             binary_kind,
@@ -238,45 +259,8 @@ mod tests {
                                 None,
                             ),
                         })),
-                    },
-                )));
-        } else {
-            asserting!("syntax tree")
-                .that(SyntaxTree::parse(text).root())
-                .is_equal_to(&SyntaxNode::ExpressionSyntax(ExpressionSyntax::Unary(
-                    UnaryExpressionSyntax {
-                        operator_token: SyntaxToken::new(
-                            unary_kind,
-                            0,
-                            String::from(op1_text),
-                            None,
-                        ),
-                        operand: Box::new(ExpressionSyntax::Binary(BinaryExpressionSyntax {
-                            left: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
-                                identifier_token: SyntaxToken::new(
-                                    SyntaxKind::Identifier,
-                                    1,
-                                    String::from("a"),
-                                    None,
-                                ),
-                            })),
-                            operator_token: SyntaxToken::new(
-                                binary_kind,
-                                2,
-                                String::from(op2_text),
-                                None,
-                            ),
-                            right: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
-                                identifier_token: SyntaxToken::new(
-                                    SyntaxKind::Identifier,
-                                    3,
-                                    String::from("b"),
-                                    None,
-                                ),
-                            })),
-                        })),
-                    },
-                )));
+                    })),
+                }));
         }
     }
 
@@ -290,27 +274,58 @@ mod tests {
 
         if op1_precedence >= op2_precedence {
             asserting!("syntax tree")
-                .that(SyntaxTree::parse(text).root())
-                .is_equal_to(&SyntaxNode::ExpressionSyntax(ExpressionSyntax::Binary(
-                    BinaryExpressionSyntax {
-                        left: Box::new(ExpressionSyntax::Binary(BinaryExpressionSyntax {
-                            left: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
-                                identifier_token: SyntaxToken::new(
-                                    SyntaxKind::Identifier,
-                                    0,
-                                    String::from("a"),
-                                    None,
-                                ),
-                            })),
-                            operator_token: SyntaxToken::new(op1, 1, String::from(op1_text), None),
-                            right: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
-                                identifier_token: SyntaxToken::new(
-                                    SyntaxKind::Identifier,
-                                    2,
-                                    String::from("b"),
-                                    None,
-                                ),
-                            })),
+                .that(&SyntaxTree::parse(text).root().root)
+                .is_equal_to(&ExpressionSyntax::Binary(BinaryExpressionSyntax {
+                    left: Box::new(ExpressionSyntax::Binary(BinaryExpressionSyntax {
+                        left: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
+                            identifier_token: SyntaxToken::new(
+                                SyntaxKind::Identifier,
+                                0,
+                                String::from("a"),
+                                None,
+                            ),
+                        })),
+                        operator_token: SyntaxToken::new(op1, 1, String::from(op1_text), None),
+                        right: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
+                            identifier_token: SyntaxToken::new(
+                                SyntaxKind::Identifier,
+                                2,
+                                String::from("b"),
+                                None,
+                            ),
+                        })),
+                    })),
+                    operator_token: SyntaxToken::new(op2, 3, String::from(op2_text), None),
+                    right: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
+                        identifier_token: SyntaxToken::new(
+                            SyntaxKind::Identifier,
+                            4,
+                            String::from("c"),
+                            None,
+                        ),
+                    })),
+                }));
+        } else {
+            asserting!("syntax tree")
+                .that(&SyntaxTree::parse(text).root().root)
+                .is_equal_to(&ExpressionSyntax::Binary(BinaryExpressionSyntax {
+                    left: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
+                        identifier_token: SyntaxToken::new(
+                            SyntaxKind::Identifier,
+                            0,
+                            String::from("a"),
+                            None,
+                        ),
+                    })),
+                    operator_token: SyntaxToken::new(op1, 1, String::from(op1_text), None),
+                    right: Box::new(ExpressionSyntax::Binary(BinaryExpressionSyntax {
+                        left: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
+                            identifier_token: SyntaxToken::new(
+                                SyntaxKind::Identifier,
+                                2,
+                                String::from("b"),
+                                None,
+                            ),
                         })),
                         operator_token: SyntaxToken::new(op2, 3, String::from(op2_text), None),
                         right: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
@@ -321,43 +336,8 @@ mod tests {
                                 None,
                             ),
                         })),
-                    },
-                )));
-        } else {
-            asserting!("syntax tree")
-                .that(SyntaxTree::parse(text).root())
-                .is_equal_to(&SyntaxNode::ExpressionSyntax(ExpressionSyntax::Binary(
-                    BinaryExpressionSyntax {
-                        left: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
-                            identifier_token: SyntaxToken::new(
-                                SyntaxKind::Identifier,
-                                0,
-                                String::from("a"),
-                                None,
-                            ),
-                        })),
-                        operator_token: SyntaxToken::new(op1, 1, String::from(op1_text), None),
-                        right: Box::new(ExpressionSyntax::Binary(BinaryExpressionSyntax {
-                            left: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
-                                identifier_token: SyntaxToken::new(
-                                    SyntaxKind::Identifier,
-                                    2,
-                                    String::from("b"),
-                                    None,
-                                ),
-                            })),
-                            operator_token: SyntaxToken::new(op2, 3, String::from(op2_text), None),
-                            right: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
-                                identifier_token: SyntaxToken::new(
-                                    SyntaxKind::Identifier,
-                                    4,
-                                    String::from("c"),
-                                    None,
-                                ),
-                            })),
-                        })),
-                    },
-                )));
+                    })),
+                }));
         }
     }
 
