@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use crate::code_analysis::text_span::TextSpan;
+
 use super::{expression_syntax::ExpressionSyntax, syntax_token::SyntaxToken};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -7,6 +9,15 @@ pub struct AssignmentExpressionSyntax {
     pub(crate) identifier_token: SyntaxToken,
     pub(crate) equals_token: SyntaxToken,
     pub(crate) expression: Box<ExpressionSyntax>,
+}
+
+impl AssignmentExpressionSyntax {
+    pub fn span(&self) -> TextSpan {
+        TextSpan {
+            start: self.identifier_token.span.start,
+            end: self.expression.span().end,
+        }
+    }
 }
 
 impl Display for AssignmentExpressionSyntax {
