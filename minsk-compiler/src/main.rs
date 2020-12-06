@@ -22,11 +22,14 @@ fn main() -> anyhow::Result<()> {
 
     loop {
         line.clear();
+        print!("minsk");
+        stdout.execute(SetForegroundColor(Color::Green))?;
         if text_builder.is_empty() {
-            print!("minsk:> ");
+            print!(":> ");
         } else {
-            print!("minsk:| ");
+            print!(":| ");
         }
+        stdout.execute(ResetColor)?;
         stdout.flush()?;
         if reader.read_line(&mut line)? == 0 {
             break;
@@ -102,7 +105,9 @@ fn main() -> anyhow::Result<()> {
                 }
             }
             Ok(value) => {
+                stdout.execute(SetForegroundColor(Color::Magenta))?;
                 println!("{}", value);
+                stdout.execute(ResetColor)?;
             }
         }
 
