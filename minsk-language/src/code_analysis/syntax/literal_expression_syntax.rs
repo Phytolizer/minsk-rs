@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use crate::code_analysis::text::text_span::TextSpan;
+
 use super::super::minsk_value::MinskValue;
 
 use super::syntax_token::SyntaxToken;
@@ -16,6 +18,10 @@ impl LiteralExpressionSyntax {
             value: literal_token.value.clone(),
             literal_token,
         }
+    }
+
+    pub fn span(&self) -> TextSpan {
+        self.literal_token.span.clone()
     }
 }
 

@@ -7,5 +7,5 @@ pub mod evaluator;
 mod minsk_type;
 pub mod minsk_value;
 pub mod syntax;
-pub mod text_span;
+pub mod text;
 pub mod variable_symbol;

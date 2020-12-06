@@ -1,12 +1,14 @@
 use crate::code_analysis::{
-    diagnostic_bag::DiagnosticBag, minsk_type::MinskType, text_span::TextSpan,
+    diagnostic_bag::DiagnosticBag,
+    minsk_type::MinskType,
+    text::{source_text::SourceText, text_span::TextSpan},
 };
 
 use super::super::minsk_value::MinskValue;
 use super::{syntax_facts::SyntaxFacts, syntax_kind::SyntaxKind, syntax_token::SyntaxToken};
 
 pub(super) struct Lexer {
-    text: String,
+    text: SourceText,
     start: usize,
     position: usize,
     kind: SyntaxKind,
@@ -15,7 +17,7 @@ pub(super) struct Lexer {
 }
 
 impl Lexer {
-    pub(super) fn new(text: String) -> Self {
+    pub(super) fn new(text: SourceText) -> Self {
         Self {
             text,
             start: 0,
@@ -27,10 +29,10 @@ impl Lexer {
     }
 
     fn lookahead(&self) -> char {
-        self.text.chars().nth(self.position + 1).unwrap_or('\0')
+        self.text.get(self.position + 1).unwrap_or('\0')
     }
     fn current(&self) -> char {
-        self.text.chars().nth(self.position).unwrap_or('\0')
+        self.text.get(self.position).unwrap_or('\0')
     }
     fn next(&mut self) {
         self.position += 1;
@@ -106,11 +108,16 @@ impl Lexer {
             }
         }
         let text = match SyntaxFacts::get_text(self.kind) {
-            Some(t) => t,
-            None => &self.text[self.start..self.position],
+            Some(t) => t.to_string(),
+            None => self.text[TextSpan {
+                start: self.start,
+                end: self.position,
+            }]
+            .iter()
+            .collect::<String>(),
         };
 
-        SyntaxToken::new(self.kind, self.start, text.to_string(), self.value.clone())
+        SyntaxToken::new(self.kind, self.start, text, self.value.clone())
     }
 
     fn read_number_token(&mut self) {
@@ -118,7 +125,12 @@ impl Lexer {
             self.next();
         }
 
-        let text = &self.text[self.start..self.position];
+        let text = self.text[TextSpan {
+            start: self.start,
+            end: self.position,
+        }]
+        .iter()
+        .collect::<String>();
         self.value = match text.parse() {
             Ok(v) => Some(MinskValue::Integer(v)),
             Err(_) => {
@@ -127,7 +139,7 @@ impl Lexer {
                         start: self.start,
                         end: self.position,
                     },
-                    text,
+                    &text,
                     MinskType::Integer,
                 );
                 return;
@@ -148,36 +160,56 @@ impl Lexer {
         while self.current().is_alphabetic() {
             self.next();
         }
-        let text = &self.text[self.start..self.position];
-        self.kind = SyntaxFacts::keyword_kind(text);
+        let text = self.text[TextSpan {
+            start: self.start,
+            end: self.position,
+        }]
+        .iter()
+        .collect::<String>();
+        self.kind = SyntaxFacts::keyword_kind(&text);
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashSet;
+    use std::iter::FromIterator;
+
     use crate::code_analysis::syntax::syntax_tree::SyntaxTree;
     use itertools::Itertools;
-    use pretty_assertions::assert_eq;
+    use spectral::prelude::*;
+    use strum::IntoEnumIterator;
 
     use super::*;
 
     fn lex_token(kind: SyntaxKind, text: &str) {
         let tokens = SyntaxTree::parse_tokens(text.to_string());
 
-        assert_eq!(1, tokens.len());
-        assert_eq!(kind, tokens[0].kind);
-        assert_eq!(text, tokens[0].text);
+        asserting!("tokens length").that(&tokens).has_length(1);
+        asserting!("token kind")
+            .that(&tokens[0].kind)
+            .is_equal_to(&kind);
+        asserting!("token text")
+            .that(&tokens[0].text.as_str())
+            .is_equal_to(&text);
     }
 
     fn lex_token_pair(t1kind: SyntaxKind, t1text: &str, t2kind: SyntaxKind, t2text: &str) {
         let tokens = SyntaxTree::parse_tokens(String::new() + t1text + t2text);
 
-        dbg!(tokens.iter().map(|t| t.kind).collect::<Vec<_>>());
-        assert_eq!(2, tokens.len());
-        assert_eq!(t1kind, tokens[0].kind);
-        assert_eq!(t1text, tokens[0].text);
-        assert_eq!(t2kind, tokens[1].kind);
-        assert_eq!(t2text, tokens[1].text);
+        asserting!("tokens length").that(&tokens).has_length(2);
+        asserting!("token 1 kind")
+            .that(&tokens[0].kind)
+            .is_equal_to(t1kind);
+        asserting!("token 1 text")
+            .that(&tokens[0].text.as_str())
+            .is_equal_to(&t1text);
+        asserting!("token 2 kind")
+            .that(&tokens[1].kind)
+            .is_equal_to(t2kind);
+        asserting!("token 2 text")
+            .that(&tokens[1].text.as_str())
+            .is_equal_to(&t2text);
     }
 
     fn lex_token_pair_with_separator(
@@ -190,38 +222,39 @@ mod tests {
     ) {
         let tokens = SyntaxTree::parse_tokens(String::new() + t1text + separator_text + t2text);
 
-        assert_eq!(3, tokens.len());
-        assert_eq!(t1kind, tokens[0].kind);
-        assert_eq!(t1text, tokens[0].text);
-        assert_eq!(separator_kind, tokens[1].kind);
-        assert_eq!(separator_text, tokens[1].text);
-        assert_eq!(t2kind, tokens[2].kind);
-        assert_eq!(t2text, tokens[2].text);
+        asserting!("tokens length").that(&tokens).has_length(3);
+        asserting!("token 1 kind")
+            .that(&tokens[0].kind)
+            .is_equal_to(&t1kind);
+        asserting!("token 1 text")
+            .that(&tokens[0].text.as_str())
+            .is_equal_to(&t1text);
+        asserting!("separator kind")
+            .that(&tokens[1].kind)
+            .is_equal_to(&separator_kind);
+        asserting!("separator text")
+            .that(&tokens[1].text.as_str())
+            .is_equal_to(&separator_text);
+        asserting!("token 2 kind")
+            .that(&tokens[2].kind)
+            .is_equal_to(&t2kind);
+        asserting!("token 2 text")
+            .that(&tokens[2].text.as_str())
+            .is_equal_to(&t2text);
     }
 
     fn get_tokens() -> Vec<(SyntaxKind, &'static str)> {
-        vec![
-            // single representation
-            (SyntaxKind::FalseKeyword, "false"),
-            (SyntaxKind::TrueKeyword, "true"),
-            (SyntaxKind::CloseParenthesis, ")"),
-            (SyntaxKind::OpenParenthesis, "("),
-            (SyntaxKind::BangEquals, "!="),
-            (SyntaxKind::EqualsEquals, "=="),
-            (SyntaxKind::PipePipe, "||"),
-            (SyntaxKind::AmpersandAmpersand, "&&"),
-            (SyntaxKind::Equals, "="),
-            (SyntaxKind::Bang, "!"),
-            (SyntaxKind::Slash, "/"),
-            (SyntaxKind::Star, "*"),
-            (SyntaxKind::Minus, "-"),
-            (SyntaxKind::Plus, "+"),
-            // multiple possible representations
+        let fixed_tokens = SyntaxKind::iter()
+            .map(|k| (k, SyntaxFacts::get_text(k)))
+            .filter_map(|(k, t)| if let Some(t) = t { Some((k, t)) } else { None })
+            .collect::<Vec<_>>();
+        let dynamic_tokens = vec![
             (SyntaxKind::Identifier, "a"),
             (SyntaxKind::Identifier, "abc"),
             (SyntaxKind::Number, "1"),
             (SyntaxKind::Number, "123"),
-        ]
+        ];
+        fixed_tokens.iter().cloned().chain(dynamic_tokens).collect()
     }
 
     fn get_separators() -> Vec<(SyntaxKind, &'static str)> {
@@ -301,6 +334,28 @@ mod tests {
     }
 
     #[test]
+    fn tests_all_token_kinds() {
+        let all_token_kinds = HashSet::<SyntaxKind>::from_iter(SyntaxKind::iter());
+        let tested_token_kinds = HashSet::from_iter(
+            get_tokens()
+                .iter()
+                .cloned()
+                .chain(get_separators())
+                .map(|(k, _)| k),
+        );
+
+        let mut untested_token_kinds = HashSet::<SyntaxKind>::from_iter(
+            all_token_kinds.difference(&tested_token_kinds).cloned(),
+        );
+        untested_token_kinds.remove(&SyntaxKind::BadToken);
+        untested_token_kinds.remove(&SyntaxKind::EndOfFile);
+
+        asserting!("all tokens tested")
+            .that(&untested_token_kinds)
+            .is_equal_to(HashSet::<SyntaxKind>::new());
+    }
+
+    #[test]
     fn lexes_token() {
         for (kind, text) in get_tokens() {
             lex_token(kind, text);
@@ -311,7 +366,6 @@ mod tests {
     fn lexes_token_pairs() {
         for (t1kind, t1text, t2kind, t2text) in get_token_pairs() {
             if t1kind != SyntaxKind::Whitespace && !requires_separator(t1kind, t2kind) {
-                dbg!((t1text, t2text));
                 lex_token_pair(t1kind, t1text, t2kind, t2text);
             }
         }

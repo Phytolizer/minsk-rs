@@ -1,10 +1,20 @@
 use std::fmt::Display;
 
+use crate::code_analysis::text::text_span::TextSpan;
+
 use super::expression_syntax::ExpressionSyntax;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum SyntaxNode {
     ExpressionSyntax(ExpressionSyntax),
+}
+
+impl SyntaxNode {
+    pub fn span(&self) -> TextSpan {
+        match self {
+            Self::ExpressionSyntax(e) => e.span(),
+        }
+    }
 }
 
 impl Display for SyntaxNode {

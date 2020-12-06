@@ -13,4 +13,5 @@ strum_macros = "0.20"
 [dev-dependencies]
 pretty_assertions = "0.6"
 itertools = "0.9"
+spectral = "0.6"
 

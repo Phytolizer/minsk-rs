@@ -1,10 +1,18 @@
 use std::fmt::Display;
 
+use crate::code_analysis::text::text_span::TextSpan;
+
 use super::syntax_token::SyntaxToken;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct NameExpressionSyntax {
     pub(crate) identifier_token: SyntaxToken,
+}
+
+impl NameExpressionSyntax {
+    pub fn span(&self) -> TextSpan {
+        self.identifier_token.span.clone()
+    }
 }
 
 impl Display for NameExpressionSyntax {

@@ -1,6 +1,6 @@
 use super::{
     diagnostic::Diagnostic, minsk_type::MinskType, syntax::syntax_kind::SyntaxKind,
-    text_span::TextSpan,
+    text::text_span::TextSpan,
 };
 
 #[derive(Debug)]

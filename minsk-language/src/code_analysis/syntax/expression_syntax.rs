@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use crate::code_analysis::text::text_span::TextSpan;
+
 use super::{
     assignment_expression_syntax::AssignmentExpressionSyntax,
     binary_expression_syntax::BinaryExpressionSyntax,
@@ -17,6 +19,19 @@ pub enum ExpressionSyntax {
     Parenthesized(ParenthesizedExpressionSyntax),
     Name(NameExpressionSyntax),
     Assignment(AssignmentExpressionSyntax),
+}
+
+impl ExpressionSyntax {
+    pub fn span(&self) -> TextSpan {
+        match self {
+            ExpressionSyntax::Literal(l) => l.span(),
+            ExpressionSyntax::Unary(u) => u.span(),
+            ExpressionSyntax::Binary(b) => b.span(),
+            ExpressionSyntax::Parenthesized(p) => p.span(),
+            ExpressionSyntax::Name(n) => n.span(),
+            ExpressionSyntax::Assignment(a) => a.span(),
+        }
+    }
 }
 
 fn format_indented(s: &dyn Display, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
