@@ -9,7 +9,7 @@ pub struct Compilation;
 
 impl Compilation {
     pub fn evaluate(
-        syntax: SyntaxTree,
+        syntax: &SyntaxTree,
         variables: &mut HashMap<VariableSymbol, MinskValue>,
     ) -> EvaluationResult {
         let mut binder = Binder::new(variables);

@@ -1,6 +1,6 @@
 use unary_expression_syntax::UnaryExpressionSyntax;
 
-use crate::code_analysis::diagnostic_bag::DiagnosticBag;
+use crate::code_analysis::{diagnostic_bag::DiagnosticBag, text::source_text::SourceText};
 
 use super::{
     super::minsk_value::MinskValue, assignment_expression_syntax::AssignmentExpressionSyntax,
@@ -16,14 +16,15 @@ use super::{
 };
 
 pub(super) struct Parser {
+    text: SourceText,
     tokens: Vec<SyntaxToken>,
     position: usize,
     diagnostics: DiagnosticBag,
 }
 
 impl Parser {
-    pub(super) fn new(text: String) -> Self {
-        let mut lexer = Lexer::new(text);
+    pub(super) fn new(text: SourceText) -> Self {
+        let mut lexer = Lexer::new(text.clone());
         let mut tokens = vec![];
         loop {
             let token = lexer.next_token();
@@ -36,6 +37,7 @@ impl Parser {
             }
         }
         Self {
+            text,
             tokens,
             position: 0,
             diagnostics: lexer.diagnostics(),
@@ -79,9 +81,10 @@ impl Parser {
         let end_of_file_token = self.match_token(SyntaxKind::EndOfFile);
 
         SyntaxTree {
+            text: self.text,
             root: SyntaxNode::ExpressionSyntax(expression),
             end_of_file_token,
-            diagnostics: self.diagnostics(),
+            diagnostics: self.diagnostics,
         }
     }
 
@@ -177,10 +180,6 @@ impl Parser {
     fn parse_numeric_literal(&mut self) -> ExpressionSyntax {
         let literal_token = self.match_token(SyntaxKind::Number);
         ExpressionSyntax::Literal(LiteralExpressionSyntax::new(literal_token))
-    }
-
-    pub(super) fn diagnostics(self) -> DiagnosticBag {
-        self.diagnostics
     }
 }
 

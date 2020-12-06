@@ -1,12 +1,14 @@
 use crate::code_analysis::{
-    diagnostic_bag::DiagnosticBag, minsk_type::MinskType, text::text_span::TextSpan,
+    diagnostic_bag::DiagnosticBag,
+    minsk_type::MinskType,
+    text::{source_text::SourceText, text_span::TextSpan},
 };
 
 use super::super::minsk_value::MinskValue;
 use super::{syntax_facts::SyntaxFacts, syntax_kind::SyntaxKind, syntax_token::SyntaxToken};
 
 pub(super) struct Lexer {
-    text: String,
+    text: SourceText,
     start: usize,
     position: usize,
     kind: SyntaxKind,
@@ -15,7 +17,7 @@ pub(super) struct Lexer {
 }
 
 impl Lexer {
-    pub(super) fn new(text: String) -> Self {
+    pub(super) fn new(text: SourceText) -> Self {
         Self {
             text,
             start: 0,
@@ -27,10 +29,10 @@ impl Lexer {
     }
 
     fn lookahead(&self) -> char {
-        self.text.chars().nth(self.position + 1).unwrap_or('\0')
+        self.text.get(self.position + 1).unwrap_or('\0')
     }
     fn current(&self) -> char {
-        self.text.chars().nth(self.position).unwrap_or('\0')
+        self.text.get(self.position).unwrap_or('\0')
     }
     fn next(&mut self) {
         self.position += 1;
@@ -106,11 +108,16 @@ impl Lexer {
             }
         }
         let text = match SyntaxFacts::get_text(self.kind) {
-            Some(t) => t,
-            None => &self.text[self.start..self.position],
+            Some(t) => t.to_string(),
+            None => self.text[TextSpan {
+                start: self.start,
+                end: self.position,
+            }]
+            .iter()
+            .collect::<String>(),
         };
 
-        SyntaxToken::new(self.kind, self.start, text.to_string(), self.value.clone())
+        SyntaxToken::new(self.kind, self.start, text, self.value.clone())
     }
 
     fn read_number_token(&mut self) {
@@ -118,7 +125,12 @@ impl Lexer {
             self.next();
         }
 
-        let text = &self.text[self.start..self.position];
+        let text = self.text[TextSpan {
+            start: self.start,
+            end: self.position,
+        }]
+        .iter()
+        .collect::<String>();
         self.value = match text.parse() {
             Ok(v) => Some(MinskValue::Integer(v)),
             Err(_) => {
@@ -127,7 +139,7 @@ impl Lexer {
                         start: self.start,
                         end: self.position,
                     },
-                    text,
+                    &text,
                     MinskType::Integer,
                 );
                 return;
@@ -148,8 +160,13 @@ impl Lexer {
         while self.current().is_alphabetic() {
             self.next();
         }
-        let text = &self.text[self.start..self.position];
-        self.kind = SyntaxFacts::keyword_kind(text);
+        let text = self.text[TextSpan {
+            start: self.start,
+            end: self.position,
+        }]
+        .iter()
+        .collect::<String>();
+        self.kind = SyntaxFacts::keyword_kind(&text);
     }
 }
 

@@ -51,12 +51,17 @@ fn main() -> anyhow::Result<()> {
         if show_tree {
             println!("{}", tree.root());
         }
-        let evaluation_result = Compilation::evaluate(tree, &mut variables);
+        let evaluation_result = Compilation::evaluate(&tree, &mut variables);
         match evaluation_result {
             Err(diagnostics) => {
+                let text = &tree.text;
                 for diagnostic in diagnostics {
+                    let line_index = text.get_line_index(diagnostic.span.start).unwrap();
+                    let line_number = line_index + 1;
+                    let character = diagnostic.span.start - text.lines()[line_index].start() + 1;
                     println!();
                     stdout.execute(SetForegroundColor(Color::DarkRed))?;
+                    print!("({}, {}): ", line_number, character);
                     println!("{}", diagnostic);
                     stdout.execute(ResetColor)?;
                     let prefix = &line[0..diagnostic.span.start];
