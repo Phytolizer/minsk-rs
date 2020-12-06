@@ -158,6 +158,7 @@ mod tests {
     use crate::code_analysis::syntax::syntax_tree::SyntaxTree;
     use itertools::Itertools;
     use pretty_assertions::assert_eq;
+    use strum::IntoEnumIterator;
 
     use super::*;
 
@@ -200,28 +201,17 @@ mod tests {
     }
 
     fn get_tokens() -> Vec<(SyntaxKind, &'static str)> {
-        vec![
-            // single representation
-            (SyntaxKind::FalseKeyword, "false"),
-            (SyntaxKind::TrueKeyword, "true"),
-            (SyntaxKind::CloseParenthesis, ")"),
-            (SyntaxKind::OpenParenthesis, "("),
-            (SyntaxKind::BangEquals, "!="),
-            (SyntaxKind::EqualsEquals, "=="),
-            (SyntaxKind::PipePipe, "||"),
-            (SyntaxKind::AmpersandAmpersand, "&&"),
-            (SyntaxKind::Equals, "="),
-            (SyntaxKind::Bang, "!"),
-            (SyntaxKind::Slash, "/"),
-            (SyntaxKind::Star, "*"),
-            (SyntaxKind::Minus, "-"),
-            (SyntaxKind::Plus, "+"),
-            // multiple possible representations
+        let fixed_tokens = SyntaxKind::iter()
+            .map(|k| (k, SyntaxFacts::get_text(k)))
+            .filter_map(|(k, t)| if let Some(t) = t { Some((k, t)) } else { None })
+            .collect::<Vec<_>>();
+        let dynamic_tokens = vec![
             (SyntaxKind::Identifier, "a"),
             (SyntaxKind::Identifier, "abc"),
             (SyntaxKind::Number, "1"),
             (SyntaxKind::Number, "123"),
-        ]
+        ];
+        fixed_tokens.iter().cloned().chain(dynamic_tokens).collect()
     }
 
     fn get_separators() -> Vec<(SyntaxKind, &'static str)> {
