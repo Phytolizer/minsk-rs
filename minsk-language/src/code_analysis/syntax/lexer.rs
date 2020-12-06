@@ -308,29 +308,16 @@ mod tests {
         let t1_is_keyword = t1kind.to_string().ends_with("Keyword");
         let t2_is_keyword = t2kind.to_string().ends_with("Keyword");
 
-        if t1kind == SyntaxKind::Identifier && t2kind == SyntaxKind::Identifier {
-            return true;
-        } else if t1_is_keyword && t2_is_keyword {
-            return true;
-        } else if t1_is_keyword && t2kind == SyntaxKind::Identifier
+        t1kind == SyntaxKind::Identifier && t2kind == SyntaxKind::Identifier
+            || t1_is_keyword && t2_is_keyword
+            || t1_is_keyword && t2kind == SyntaxKind::Identifier
             || t2_is_keyword && t1kind == SyntaxKind::Identifier
-        {
-            return true;
-        } else if t1kind == SyntaxKind::Whitespace && t2kind == SyntaxKind::Whitespace {
-            return true;
-        } else if t1kind == SyntaxKind::Number && t2kind == SyntaxKind::Number {
-            return true;
-        } else if t1kind == SyntaxKind::Bang && t2kind == SyntaxKind::Equals {
-            return true;
-        } else if t1kind == SyntaxKind::Equals && t2kind == SyntaxKind::Equals {
-            return true;
-        } else if t1kind == SyntaxKind::Equals && t2kind == SyntaxKind::EqualsEquals {
-            return true;
-        } else if t1kind == SyntaxKind::Bang && t2kind == SyntaxKind::EqualsEquals {
-            return true;
-        }
-
-        false
+            || t1kind == SyntaxKind::Whitespace && t2kind == SyntaxKind::Whitespace
+            || t1kind == SyntaxKind::Number && t2kind == SyntaxKind::Number
+            || t1kind == SyntaxKind::Bang && t2kind == SyntaxKind::Equals
+            || t1kind == SyntaxKind::Equals && t2kind == SyntaxKind::Equals
+            || t1kind == SyntaxKind::Equals && t2kind == SyntaxKind::EqualsEquals
+            || t1kind == SyntaxKind::Bang && t2kind == SyntaxKind::EqualsEquals
     }
 
     #[test]
