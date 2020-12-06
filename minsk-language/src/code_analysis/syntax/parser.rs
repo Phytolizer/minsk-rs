@@ -137,35 +137,46 @@ impl Parser {
 
     fn parse_primary_expression(&mut self) -> ExpressionSyntax {
         match self.current().kind {
-            SyntaxKind::OpenParenthesis => {
-                let open_parenthesis_token = self.next_token();
-                let expression = self.parse_expression();
-                let close_parenthesis_token = self.match_token(SyntaxKind::CloseParenthesis);
-                ExpressionSyntax::Parenthesized(ParenthesizedExpressionSyntax {
-                    open_parenthesis_token,
-                    expression: Box::new(expression),
-                    close_parenthesis_token,
-                })
-            }
-            SyntaxKind::TrueKeyword | SyntaxKind::FalseKeyword => {
-                let keyword_token = self.next_token();
-                let value = Some(MinskValue::Boolean(
-                    keyword_token.kind == SyntaxKind::TrueKeyword,
-                ));
-                ExpressionSyntax::Literal(LiteralExpressionSyntax {
-                    literal_token: keyword_token,
-                    value,
-                })
-            }
-            SyntaxKind::Identifier => {
-                let identifier_token = self.next_token();
-                ExpressionSyntax::Name(NameExpressionSyntax { identifier_token })
-            }
-            _ => {
-                let literal_token = self.match_token(SyntaxKind::Number);
-                ExpressionSyntax::Literal(LiteralExpressionSyntax::new(literal_token))
-            }
+            SyntaxKind::OpenParenthesis => self.parse_parenthesized_expression(),
+            SyntaxKind::TrueKeyword | SyntaxKind::FalseKeyword => self.parse_boolean_expression(),
+            SyntaxKind::Number => self.parse_numeric_literal(),
+            _ => self.parse_name_expression(),
         }
+    }
+
+    fn parse_parenthesized_expression(&mut self) -> ExpressionSyntax {
+        let open_parenthesis_token = self.next_token();
+        let expression = self.parse_expression();
+        let close_parenthesis_token = self.match_token(SyntaxKind::CloseParenthesis);
+        ExpressionSyntax::Parenthesized(ParenthesizedExpressionSyntax {
+            open_parenthesis_token,
+            expression: Box::new(expression),
+            close_parenthesis_token,
+        })
+    }
+
+    fn parse_boolean_expression(&mut self) -> ExpressionSyntax {
+        let is_true = self.current().kind == SyntaxKind::TrueKeyword;
+        let literal_token = if is_true {
+            self.match_token(SyntaxKind::TrueKeyword)
+        } else {
+            self.match_token(SyntaxKind::FalseKeyword)
+        };
+        let value = Some(MinskValue::Boolean(is_true));
+        ExpressionSyntax::Literal(LiteralExpressionSyntax {
+            literal_token,
+            value,
+        })
+    }
+
+    fn parse_name_expression(&mut self) -> ExpressionSyntax {
+        let identifier_token = self.match_token(SyntaxKind::Identifier);
+        ExpressionSyntax::Name(NameExpressionSyntax { identifier_token })
+    }
+
+    fn parse_numeric_literal(&mut self) -> ExpressionSyntax {
+        let literal_token = self.match_token(SyntaxKind::Number);
+        ExpressionSyntax::Literal(LiteralExpressionSyntax::new(literal_token))
     }
 
     pub(super) fn diagnostics(self) -> DiagnosticBag {
