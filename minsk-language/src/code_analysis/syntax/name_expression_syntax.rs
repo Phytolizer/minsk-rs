@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use super::syntax_token::SyntaxToken;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct NameExpressionSyntax {
     pub(crate) identifier_token: SyntaxToken,
 }

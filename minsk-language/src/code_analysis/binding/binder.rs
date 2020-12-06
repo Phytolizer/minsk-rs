@@ -45,8 +45,9 @@ impl<'compilation> Binder<'compilation> {
     }
 
     pub fn bind(&mut self, syntax: &SyntaxNode) -> BoundExpression {
-        let SyntaxNode::ExpressionSyntax(e) = syntax;
-        self.bind_expression(e)
+        match syntax {
+            SyntaxNode::ExpressionSyntax(e) => self.bind_expression(e),
+        }
     }
 
     pub(super) fn bind_expression(&mut self, syntax: &ExpressionSyntax) -> BoundExpression {

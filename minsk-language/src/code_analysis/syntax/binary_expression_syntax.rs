@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use super::{expression_syntax::ExpressionSyntax, syntax_token::SyntaxToken};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct BinaryExpressionSyntax {
     pub(crate) left: Box<ExpressionSyntax>,
     pub(crate) operator_token: SyntaxToken,

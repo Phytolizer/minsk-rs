@@ -9,7 +9,7 @@ use super::{
     unary_expression_syntax::UnaryExpressionSyntax,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ExpressionSyntax {
     Literal(LiteralExpressionSyntax),
     Unary(UnaryExpressionSyntax),

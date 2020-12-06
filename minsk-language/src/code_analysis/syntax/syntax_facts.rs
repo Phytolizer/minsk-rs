@@ -15,6 +15,26 @@ impl SyntaxFacts {
             _ => SyntaxKind::Identifier,
         }
     }
+
+    pub(super) fn get_text(kind: SyntaxKind) -> Option<&'static str> {
+        match kind {
+            SyntaxKind::Plus => Some("+"),
+            SyntaxKind::Minus => Some("-"),
+            SyntaxKind::Star => Some("*"),
+            SyntaxKind::Slash => Some("/"),
+            SyntaxKind::Bang => Some("!"),
+            SyntaxKind::Equals => Some("="),
+            SyntaxKind::AmpersandAmpersand => Some("&&"),
+            SyntaxKind::PipePipe => Some("||"),
+            SyntaxKind::EqualsEquals => Some("=="),
+            SyntaxKind::BangEquals => Some("!="),
+            SyntaxKind::OpenParenthesis => Some("("),
+            SyntaxKind::CloseParenthesis => Some(")"),
+            SyntaxKind::FalseKeyword => Some("false"),
+            SyntaxKind::TrueKeyword => Some("true"),
+            _ => None,
+        }
+    }
 }
 
 impl SyntaxFactsExt for SyntaxKind {
@@ -33,6 +53,30 @@ impl SyntaxFactsExt for SyntaxKind {
         match self {
             SyntaxKind::Plus | SyntaxKind::Minus | SyntaxKind::Bang => 6,
             _ => 0,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::code_analysis::syntax::syntax_tree::SyntaxTree;
+
+    use super::*;
+    use pretty_assertions::assert_eq;
+    use strum::IntoEnumIterator;
+    #[test]
+    fn get_text_round_trips() {
+        for kind in SyntaxKind::iter() {
+            let text = SyntaxFacts::get_text(kind);
+            if let Some(text) = text {
+                let tokens = SyntaxTree::parse_tokens(text.to_string());
+
+                assert_eq!(1, tokens.len());
+                let token = &tokens[0];
+
+                assert_eq!(kind, token.kind);
+                assert_eq!(text, token.text);
+            }
         }
     }
 }

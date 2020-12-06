@@ -80,3 +80,62 @@ impl<'compilation> Evaluator<'compilation> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::code_analysis::{
+        compilation::Compilation, evaluation_result::EvaluationResult,
+        syntax::syntax_tree::SyntaxTree,
+    };
+
+    use super::*;
+    use pretty_assertions::assert_eq;
+
+    fn a(text: &str, expected: MinskValue) {
+        let syntax_tree = SyntaxTree::parse(text.to_string());
+        let actual = Compilation::evaluate(syntax_tree, &mut {
+            let mut variables = HashMap::<VariableSymbol, MinskValue>::new();
+            variables
+        });
+
+        assert!(matches!(actual, EvaluationResult::Value(_)));
+        let actual = match actual {
+            EvaluationResult::Value(v) => v,
+            _ => unreachable!(),
+        };
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn evaluates_correctly() {
+        for (text, expected) in [
+            ("1", MinskValue::Integer(1)),
+            ("+1", MinskValue::Integer(1)),
+            ("-1", MinskValue::Integer(-1)),
+            ("14 + 12", MinskValue::Integer(26)),
+            ("12 - 3", MinskValue::Integer(9)),
+            ("4 * 2", MinskValue::Integer(8)),
+            ("9 / 3", MinskValue::Integer(3)),
+            ("(10)", MinskValue::Integer(10)),
+            ("12 == 3", MinskValue::Boolean(false)),
+            ("3 == 3", MinskValue::Boolean(true)),
+            ("12 != 3", MinskValue::Boolean(true)),
+            ("3 != 3", MinskValue::Boolean(false)),
+            ("true == false", MinskValue::Boolean(false)),
+            ("true == true", MinskValue::Boolean(true)),
+            ("false == false", MinskValue::Boolean(true)),
+            ("true != false", MinskValue::Boolean(true)),
+            ("false != false", MinskValue::Boolean(false)),
+            ("true", MinskValue::Boolean(true)),
+            ("false", MinskValue::Boolean(false)),
+            ("!true", MinskValue::Boolean(false)),
+            ("!false", MinskValue::Boolean(true)),
+            ("(a = 10) * a", MinskValue::Integer(100)),
+        ]
+        .iter()
+        {
+            println!("{}", text);
+            a(text, expected.clone());
+        }
+    }
+}

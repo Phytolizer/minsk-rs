@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use super::expression_syntax::ExpressionSyntax;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum SyntaxNode {
     ExpressionSyntax(ExpressionSyntax),
 }

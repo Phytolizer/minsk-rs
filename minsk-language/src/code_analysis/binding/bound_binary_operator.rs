@@ -35,7 +35,7 @@ impl BoundBinaryOperator {
             result_type,
         }
     }
-    pub(super) const fn operators() -> [BoundBinaryOperator; 8] {
+    pub(super) const fn operators() -> [BoundBinaryOperator; 10] {
         [
             BoundBinaryOperator::new(
                 SyntaxKind::Plus,
@@ -64,9 +64,21 @@ impl BoundBinaryOperator {
                 MinskType::Boolean,
             ),
             BoundBinaryOperator::new_with_result_type(
+                SyntaxKind::EqualsEquals,
+                BoundBinaryOperatorKind::Equality,
+                MinskType::Boolean,
+                MinskType::Boolean,
+            ),
+            BoundBinaryOperator::new_with_result_type(
                 SyntaxKind::BangEquals,
                 BoundBinaryOperatorKind::Inequality,
                 MinskType::Integer,
+                MinskType::Boolean,
+            ),
+            BoundBinaryOperator::new_with_result_type(
+                SyntaxKind::BangEquals,
+                BoundBinaryOperatorKind::Inequality,
+                MinskType::Boolean,
                 MinskType::Boolean,
             ),
             BoundBinaryOperator::new(
