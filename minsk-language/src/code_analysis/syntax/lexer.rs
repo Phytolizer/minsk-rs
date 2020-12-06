@@ -157,7 +157,7 @@ impl Lexer {
 mod tests {
     use crate::code_analysis::syntax::syntax_tree::SyntaxTree;
     use itertools::Itertools;
-    use pretty_assertions::assert_eq;
+    use spectral::prelude::*;
     use strum::IntoEnumIterator;
 
     use super::*;
@@ -165,20 +165,31 @@ mod tests {
     fn lex_token(kind: SyntaxKind, text: &str) {
         let tokens = SyntaxTree::parse_tokens(text.to_string());
 
-        assert_eq!(1, tokens.len());
-        assert_eq!(kind, tokens[0].kind);
-        assert_eq!(text, tokens[0].text);
+        asserting!("tokens length").that(&tokens).has_length(1);
+        asserting!("token kind")
+            .that(&tokens[0].kind)
+            .is_equal_to(&kind);
+        asserting!("token text")
+            .that(&tokens[0].text.as_str())
+            .is_equal_to(&text);
     }
 
     fn lex_token_pair(t1kind: SyntaxKind, t1text: &str, t2kind: SyntaxKind, t2text: &str) {
         let tokens = SyntaxTree::parse_tokens(String::new() + t1text + t2text);
 
-        dbg!(tokens.iter().map(|t| t.kind).collect::<Vec<_>>());
-        assert_eq!(2, tokens.len());
-        assert_eq!(t1kind, tokens[0].kind);
-        assert_eq!(t1text, tokens[0].text);
-        assert_eq!(t2kind, tokens[1].kind);
-        assert_eq!(t2text, tokens[1].text);
+        asserting!("tokens length").that(&tokens).has_length(2);
+        asserting!("token 1 kind")
+            .that(&tokens[0].kind)
+            .is_equal_to(t1kind);
+        asserting!("token 1 text")
+            .that(&tokens[0].text.as_str())
+            .is_equal_to(&t1text);
+        asserting!("token 2 kind")
+            .that(&tokens[1].kind)
+            .is_equal_to(t2kind);
+        asserting!("token 2 text")
+            .that(&tokens[1].text.as_str())
+            .is_equal_to(&t2text);
     }
 
     fn lex_token_pair_with_separator(
@@ -191,13 +202,25 @@ mod tests {
     ) {
         let tokens = SyntaxTree::parse_tokens(String::new() + t1text + separator_text + t2text);
 
-        assert_eq!(3, tokens.len());
-        assert_eq!(t1kind, tokens[0].kind);
-        assert_eq!(t1text, tokens[0].text);
-        assert_eq!(separator_kind, tokens[1].kind);
-        assert_eq!(separator_text, tokens[1].text);
-        assert_eq!(t2kind, tokens[2].kind);
-        assert_eq!(t2text, tokens[2].text);
+        asserting!("tokens length").that(&tokens).has_length(3);
+        asserting!("token 1 kind")
+            .that(&tokens[0].kind)
+            .is_equal_to(&t1kind);
+        asserting!("token 1 text")
+            .that(&tokens[0].text.as_str())
+            .is_equal_to(&t1text);
+        asserting!("separator kind")
+            .that(&tokens[1].kind)
+            .is_equal_to(&separator_kind);
+        asserting!("separator text")
+            .that(&tokens[1].text.as_str())
+            .is_equal_to(&separator_text);
+        asserting!("token 2 kind")
+            .that(&tokens[2].kind)
+            .is_equal_to(&t2kind);
+        asserting!("token 2 text")
+            .that(&tokens[2].text.as_str())
+            .is_equal_to(&t2text);
     }
 
     fn get_tokens() -> Vec<(SyntaxKind, &'static str)> {
@@ -301,7 +324,6 @@ mod tests {
     fn lexes_token_pairs() {
         for (t1kind, t1text, t2kind, t2text) in get_token_pairs() {
             if t1kind != SyntaxKind::Whitespace && !requires_separator(t1kind, t2kind) {
-                dbg!((t1text, t2text));
                 lex_token_pair(t1kind, t1text, t2kind, t2text);
             }
         }

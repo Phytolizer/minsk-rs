@@ -89,7 +89,7 @@ mod tests {
     };
 
     use super::*;
-    use pretty_assertions::assert_eq;
+    use spectral::prelude::*;
 
     fn a(text: &str, expected: MinskValue) {
         let syntax_tree = SyntaxTree::parse(text.to_string());
@@ -98,12 +98,16 @@ mod tests {
             variables
         });
 
-        assert!(matches!(actual, EvaluationResult::Value(_)));
+        asserting!("no errors")
+            .that(&actual)
+            .matches(|r| matches!(r, EvaluationResult::Value(_)));
         let actual = match actual {
             EvaluationResult::Value(v) => v,
             _ => unreachable!(),
         };
-        assert_eq!(expected, actual);
+        asserting!("evaluated value")
+            .that(&actual)
+            .is_equal_to(&expected);
     }
 
     #[test]
