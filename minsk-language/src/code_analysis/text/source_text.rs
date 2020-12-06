@@ -122,3 +122,24 @@ impl From<String> for SourceText {
         Self::new(s)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use spectral::asserting;
+
+    use super::*;
+
+    fn includes_last_line_helper(text: &str, expected_line_count: usize) {
+        let source_text = SourceText::new(text.to_string());
+        asserting("line count equal")
+            .that(&source_text.lines().len())
+            .is_equal_to(expected_line_count);
+    }
+
+    #[test]
+    fn includes_last_line() {
+        for (text, expected_line_count) in &[(".", 1), (".\r\n", 2), (".\r\n\r\n", 3)] {
+            includes_last_line_helper(text, *expected_line_count);
+        }
+    }
+}
