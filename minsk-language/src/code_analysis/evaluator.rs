@@ -91,7 +91,7 @@ mod tests {
     use super::*;
     use spectral::prelude::*;
 
-    fn a(text: &str, expected: MinskValue) {
+    fn try_evaluate(text: &str, expected: MinskValue) {
         let syntax_tree = SyntaxTree::parse(text.to_string());
         let actual = Compilation::evaluate(syntax_tree, &mut {
             let mut variables = HashMap::<VariableSymbol, MinskValue>::new();
@@ -138,8 +138,8 @@ mod tests {
         ]
         .iter()
         {
-            println!("{}", text);
-            a(text, expected.clone());
+            println!("{} => {}", text, expected);
+            try_evaluate(text, expected.clone());
         }
     }
 }
