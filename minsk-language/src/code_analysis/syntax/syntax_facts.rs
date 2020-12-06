@@ -16,7 +16,6 @@ impl SyntaxFacts {
         }
     }
 
-    #[cfg(test)]
     pub(super) fn get_text(kind: SyntaxKind) -> Option<&'static str> {
         match kind {
             SyntaxKind::Plus => Some("+"),
