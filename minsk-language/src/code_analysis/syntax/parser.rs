@@ -22,7 +22,7 @@ pub(super) struct Parser {
 
 impl Parser {
     pub(super) fn new(text: SourceText) -> Self {
-        let mut lexer = Lexer::new(text.clone());
+        let mut lexer = Lexer::new(text);
         let mut tokens = vec![];
         loop {
             let token = lexer.next_token();
