@@ -16,7 +16,7 @@ fn main() -> anyhow::Result<()> {
     let mut stdout = io::stdout();
     let mut reader = BufReader::new(io::stdin());
     let mut line = String::new();
-    let mut show_tree = true;
+    let mut show_tree = false;
     let mut variables = HashMap::<VariableSymbol, MinskValue>::new();
 
     loop {
