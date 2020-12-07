@@ -3,7 +3,7 @@ use super::{
     text::text_span::TextSpan,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub(super) struct DiagnosticBag {
     diagnostics: Vec<Diagnostic>,
 }
@@ -82,6 +82,11 @@ impl DiagnosticBag {
 
     pub(crate) fn report_undefined_name(&mut self, span: TextSpan, name: &str) {
         let message = format!("Variable '{}' doesn't exist", name);
+        self.report(span, message);
+    }
+
+    pub(crate) fn report_variable_already_declared(&mut self, span: TextSpan, name: &str) {
+        let message = format!("Variable '{}' has already been declared", name);
         self.report(span, message);
     }
 }

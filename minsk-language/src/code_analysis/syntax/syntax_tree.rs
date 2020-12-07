@@ -7,7 +7,7 @@ use super::{
     syntax_token::SyntaxToken,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SyntaxTree {
     text: SourceText,
     root: CompilationUnit,

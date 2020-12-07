@@ -19,6 +19,7 @@ fn main() -> anyhow::Result<()> {
     let mut text_builder = String::new();
     let mut show_tree = false;
     let mut variables = HashMap::<VariableSymbol, MinskValue>::new();
+    let mut previous: Option<Compilation> = None;
 
     loop {
         line.clear();
@@ -67,7 +68,13 @@ fn main() -> anyhow::Result<()> {
         if show_tree {
             println!("{}", tree.root());
         }
-        let evaluation_result = Compilation::evaluate(&tree, &mut variables);
+        let mut compilation = if let Some(previous) = previous {
+            previous.continue_with(tree.clone())
+        } else {
+            Compilation::new(tree.clone())
+        };
+        previous = None;
+        let evaluation_result = compilation.evaluate(&mut variables);
         match evaluation_result {
             Err(diagnostics) => {
                 let text = tree.text();
@@ -108,6 +115,7 @@ fn main() -> anyhow::Result<()> {
                 stdout.execute(SetForegroundColor(Color::Magenta))?;
                 println!("{}", value);
                 stdout.execute(ResetColor)?;
+                previous = Some(compilation);
             }
         }
 

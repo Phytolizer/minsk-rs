@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 strum = { version = "0.20", features = ["derive"] }
 strum_macros = "0.20"
+parking_lot = "0.11"
 
 [dev-dependencies]
 pretty_assertions = "0.6"

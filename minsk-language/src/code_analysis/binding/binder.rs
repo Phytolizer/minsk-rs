@@ -1,4 +1,5 @@
-use std::collections::HashMap;
+use parking_lot::RwLock;
+use std::sync::Arc;
 
 use crate::{
     code_analysis::syntax::expression_syntax::ExpressionSyntax,
@@ -9,7 +10,7 @@ use crate::{
         minsk_value::MinskValue,
         syntax::assignment_expression_syntax::AssignmentExpressionSyntax,
         syntax::{
-            binary_expression_syntax::BinaryExpressionSyntax,
+            binary_expression_syntax::BinaryExpressionSyntax, compilation_unit::CompilationUnit,
             name_expression_syntax::NameExpressionSyntax,
             unary_expression_syntax::UnaryExpressionSyntax,
         },
@@ -21,30 +22,67 @@ use super::{
     super::syntax::literal_expression_syntax::LiteralExpressionSyntax,
     bound_assignment_expression::BoundAssignmentExpression,
     bound_binary_expression::BoundBinaryExpression, bound_binary_operator::BoundBinaryOperator,
-    bound_expression::BoundExpression, bound_literal_expression::BoundLiteralExpression,
+    bound_expression::BoundExpression, bound_global_scope::BoundGlobalScope,
+    bound_literal_expression::BoundLiteralExpression, bound_scope::BoundScope,
     bound_unary_expression::BoundUnaryExpression, bound_unary_operator::BoundUnaryOperator,
     bound_variable_expression::BoundVariableExpression,
 };
 
-pub struct Binder<'compilation> {
-    variables: &'compilation mut HashMap<VariableSymbol, MinskValue>,
+pub struct Binder {
+    scope: Arc<RwLock<BoundScope>>,
     diagnostics: DiagnosticBag,
 }
 
-impl<'compilation> Binder<'compilation> {
-    pub fn new(variables: &'compilation mut HashMap<VariableSymbol, MinskValue>) -> Self {
+impl Binder {
+    pub(crate) fn new(parent: Option<Arc<RwLock<BoundScope>>>) -> Self {
         Self {
-            variables,
+            scope: Arc::new(RwLock::new(BoundScope::new(parent))),
             diagnostics: DiagnosticBag::new(),
         }
     }
 
-    pub fn diagnostics(&self) -> impl Iterator<Item = Diagnostic> + '_ {
-        self.diagnostics.iter()
+    pub(crate) fn bind_global_scope(
+        previous: Option<Arc<BoundGlobalScope>>,
+        syntax: &CompilationUnit,
+    ) -> BoundGlobalScope {
+        let parent_scope = Self::create_parent_scopes(previous.clone());
+        let mut binder = Binder::new(parent_scope);
+        let expression = binder.bind_expression(syntax.expression());
+        let variables = binder
+            .scope
+            .read()
+            .declared_variables()
+            .cloned()
+            .collect::<Vec<_>>();
+        let diagnostics = binder.diagnostics().collect::<Vec<_>>();
+        BoundGlobalScope::new(previous, diagnostics, variables, expression)
     }
 
-    pub fn bind(&mut self, syntax: &ExpressionSyntax) -> BoundExpression {
-        self.bind_expression(syntax)
+    pub(crate) fn create_parent_scopes(
+        mut previous: Option<Arc<BoundGlobalScope>>,
+    ) -> Option<Arc<RwLock<BoundScope>>> {
+        let mut stack = Vec::<Arc<BoundGlobalScope>>::new();
+        while let Some(prev) = &previous {
+            stack.push(prev.clone());
+
+            previous = previous.and_then(|p| p.previous().clone());
+        }
+
+        let mut parent: Option<Arc<RwLock<BoundScope>>> = None;
+        while stack.len() > 0 {
+            let previous = stack.pop().unwrap();
+            let mut scope = BoundScope::new(parent);
+            for v in previous.variables() {
+                scope.try_declare(v);
+            }
+
+            parent = Some(Arc::new(RwLock::new(scope)));
+        }
+        parent
+    }
+
+    pub fn diagnostics(&self) -> impl Iterator<Item = Diagnostic> + '_ {
+        self.diagnostics.iter()
     }
 
     pub(super) fn bind_expression(&mut self, syntax: &ExpressionSyntax) -> BoundExpression {
@@ -115,11 +153,8 @@ impl<'compilation> Binder<'compilation> {
 
     fn bind_name_expression(&mut self, syntax: &NameExpressionSyntax) -> BoundExpression {
         let name = &syntax.identifier_token.text;
-        let variable =
-            self.variables
-                .iter()
-                .find_map(|v| if &v.0.name == name { Some(v.0) } else { None });
-        if let Some(variable) = variable.cloned() {
+        let variable = self.scope.read().try_lookup(name.clone());
+        if let Some(variable) = variable {
             BoundExpression::Variable(BoundVariableExpression { variable })
         } else {
             self.diagnostics
@@ -137,15 +172,14 @@ impl<'compilation> Binder<'compilation> {
         let name = syntax.identifier_token.text.clone();
         let bound = self.bind_expression(&syntax.expression);
 
-        let existing_variable = self.variables.keys().find(|k| k.name == name).cloned();
-        if let Some(existing_variable) = existing_variable {
-            self.variables.remove(&existing_variable);
-        }
         let variable = VariableSymbol {
-            name,
+            name: name.clone(),
             ty: bound.kind(),
         };
-        self.variables.insert(variable.clone(), MinskValue::Null);
+        if !self.scope.write().try_declare(variable.clone()) {
+            self.diagnostics
+                .report_variable_already_declared(syntax.identifier_token.span, &name);
+        }
 
         BoundExpression::Assignment(BoundAssignmentExpression {
             variable,

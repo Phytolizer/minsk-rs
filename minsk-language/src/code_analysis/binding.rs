@@ -1,10 +1,12 @@
-pub mod binder;
+pub(super) mod binder;
 pub(super) mod bound_assignment_expression;
 pub(super) mod bound_binary_expression;
 mod bound_binary_operator;
 pub(super) mod bound_binary_operator_kind;
 pub(super) mod bound_expression;
+pub(super) mod bound_global_scope;
 pub(super) mod bound_literal_expression;
+mod bound_scope;
 pub(super) mod bound_unary_expression;
 mod bound_unary_operator;
 pub(super) mod bound_unary_operator_kind;
