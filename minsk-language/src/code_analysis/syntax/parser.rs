@@ -76,10 +76,7 @@ impl Parser {
     pub fn parse_compilation_unit(&mut self) -> CompilationUnit {
         let expression = self.parse_expression();
         let end_of_file_token = self.match_token(SyntaxKind::EndOfFile);
-        CompilationUnit {
-            root: expression,
-            end_of_file_token,
-        }
+        CompilationUnit::new(expression, end_of_file_token)
     }
 
     fn parse_expression(&mut self) -> ExpressionSyntax {
@@ -203,7 +200,7 @@ mod tests {
 
         if op1_precedence >= op2_precedence {
             asserting!("syntax tree")
-                .that(&SyntaxTree::parse(text).root().root)
+                .that(&SyntaxTree::parse(text).root().expression())
                 .is_equal_to(&ExpressionSyntax::Binary(BinaryExpressionSyntax {
                     left: Box::new(ExpressionSyntax::Unary(UnaryExpressionSyntax {
                         operator_token: SyntaxToken::new(
@@ -233,7 +230,7 @@ mod tests {
                 }));
         } else {
             asserting!("syntax tree")
-                .that(&SyntaxTree::parse(text).root().root)
+                .that(&SyntaxTree::parse(text).root().expression())
                 .is_equal_to(&ExpressionSyntax::Unary(UnaryExpressionSyntax {
                     operator_token: SyntaxToken::new(unary_kind, 0, String::from(op1_text), None),
                     operand: Box::new(ExpressionSyntax::Binary(BinaryExpressionSyntax {
@@ -274,7 +271,7 @@ mod tests {
 
         if op1_precedence >= op2_precedence {
             asserting!("syntax tree")
-                .that(&SyntaxTree::parse(text).root().root)
+                .that(&SyntaxTree::parse(text).root().expression())
                 .is_equal_to(&ExpressionSyntax::Binary(BinaryExpressionSyntax {
                     left: Box::new(ExpressionSyntax::Binary(BinaryExpressionSyntax {
                         left: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
@@ -307,7 +304,7 @@ mod tests {
                 }));
         } else {
             asserting!("syntax tree")
-                .that(&SyntaxTree::parse(text).root().root)
+                .that(&SyntaxTree::parse(text).root().expression())
                 .is_equal_to(&ExpressionSyntax::Binary(BinaryExpressionSyntax {
                     left: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
                         identifier_token: SyntaxToken::new(

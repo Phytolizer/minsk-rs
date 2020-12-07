@@ -13,7 +13,7 @@ impl Compilation {
         variables: &mut HashMap<VariableSymbol, MinskValue>,
     ) -> EvaluationResult {
         let mut binder = Binder::new(variables);
-        let bound_expression = binder.bind(&syntax.root().root);
+        let bound_expression = binder.bind(&syntax.root().expression());
         let mut diagnostics = syntax.diagnostics().collect::<Vec<_>>();
         diagnostics.append(&mut binder.diagnostics().collect());
         if !diagnostics.is_empty() {
