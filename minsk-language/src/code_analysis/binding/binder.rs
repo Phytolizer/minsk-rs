@@ -69,7 +69,7 @@ impl Binder {
         }
 
         let mut parent: Option<Arc<RwLock<BoundScope>>> = None;
-        while stack.len() > 0 {
+        while !stack.is_empty() {
             let previous = stack.pop().unwrap();
             let mut scope = BoundScope::new(parent);
             for v in previous.variables() {
@@ -114,7 +114,7 @@ impl Binder {
             })
         } else {
             self.diagnostics.report_undefined_unary_operator(
-                syntax.operator_token.span.clone(),
+                syntax.operator_token.span,
                 &syntax.operator_token.text,
                 operand.kind(),
             );
@@ -135,7 +135,7 @@ impl Binder {
             })
         } else {
             self.diagnostics.report_undefined_binary_operator(
-                syntax.operator_token.span.clone(),
+                syntax.operator_token.span,
                 &syntax.operator_token.text,
                 left.kind(),
                 right.kind(),
@@ -158,7 +158,7 @@ impl Binder {
             BoundExpression::Variable(BoundVariableExpression { variable })
         } else {
             self.diagnostics
-                .report_undefined_name(syntax.identifier_token.span.clone(), name);
+                .report_undefined_name(syntax.identifier_token.span, name);
             BoundExpression::Literal(BoundLiteralExpression {
                 value: MinskValue::Integer(0),
             })
