@@ -138,8 +138,10 @@ mod tests {
 
     #[test]
     fn includes_last_line() {
-        for (text, expected_line_count) in &[(".", 1), (".\r\n", 2), (".\r\n\r\n", 3)] {
-            includes_last_line_helper(text, *expected_line_count);
+        for (text, expected_line_count) in
+            [(".", 1), (".\r\n", 2), (".\r\n\r\n", 3)].iter().cloned()
+        {
+            includes_last_line_helper(text, expected_line_count);
         }
     }
 }
