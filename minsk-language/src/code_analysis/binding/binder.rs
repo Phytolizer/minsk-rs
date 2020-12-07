@@ -54,7 +54,12 @@ impl Binder {
             .declared_variables()
             .cloned()
             .collect::<Vec<_>>();
-        let diagnostics = binder.diagnostics().collect::<Vec<_>>();
+        let mut diagnostics = binder.diagnostics().collect::<Vec<_>>();
+
+        if let Some(previous) = &previous {
+            diagnostics.append(&mut previous.diagnostics().collect::<Vec<_>>());
+        }
+
         BoundGlobalScope::new(previous, diagnostics, variables, expression)
     }
 

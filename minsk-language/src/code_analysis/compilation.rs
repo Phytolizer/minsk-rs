@@ -9,6 +9,7 @@ use super::{
     variable_symbol::VariableSymbol,
 };
 
+#[derive(Clone)]
 pub struct Compilation {
     syntax_tree: SyntaxTree,
     previous: Option<Box<Compilation>>,

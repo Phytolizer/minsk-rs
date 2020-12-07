@@ -54,6 +54,7 @@ fn main() -> anyhow::Result<()> {
                     );
                     continue;
                 }
+                "#reset" => previous = None,
                 _ => {}
             }
         }
@@ -68,12 +69,11 @@ fn main() -> anyhow::Result<()> {
         if show_tree {
             println!("{}", tree.root());
         }
-        let mut compilation = if let Some(previous) = previous {
+        let mut compilation = if let Some(previous) = previous.clone() {
             previous.continue_with(tree.clone())
         } else {
             Compilation::new(tree.clone())
         };
-        previous = None;
         let evaluation_result = compilation.evaluate(&mut variables);
         match evaluation_result {
             Err(diagnostics) => {
@@ -94,9 +94,7 @@ fn main() -> anyhow::Result<()> {
                     }]
                     .iter()
                     .collect::<String>();
-                    let error = &tree.text()[diagnostic.span.clone()]
-                        .iter()
-                        .collect::<String>();
+                    let error = &tree.text()[diagnostic.span].iter().collect::<String>();
                     let suffix = &tree.text()[TextSpan {
                         start: diagnostic.span.end,
                         end: line.end(),
