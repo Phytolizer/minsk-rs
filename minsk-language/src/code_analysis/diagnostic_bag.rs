@@ -85,8 +85,13 @@ impl DiagnosticBag {
         self.report(span, message);
     }
 
-    pub(crate) fn report_variable_already_declared(&mut self, span: TextSpan, name: &str) {
-        let message = format!("Variable '{}' has already been declared", name);
+    pub(crate) fn report_cannot_convert(
+        &mut self,
+        span: TextSpan,
+        from_type: MinskType,
+        to_type: MinskType,
+    ) {
+        let message = format!("Cannot convert {} to {}", from_type, to_type);
         self.report(span, message);
     }
 }

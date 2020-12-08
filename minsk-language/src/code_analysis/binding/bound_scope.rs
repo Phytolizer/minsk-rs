@@ -26,9 +26,9 @@ impl BoundScope {
         true
     }
 
-    pub(super) fn try_lookup(&self, name: String) -> Option<VariableSymbol> {
+    pub(super) fn try_lookup(&self, name: &str) -> Option<VariableSymbol> {
         self.variables
-            .get(&name)
+            .get(name)
             .cloned()
             .or_else(|| self.parent.as_ref().and_then(|p| p.read().try_lookup(name)))
     }

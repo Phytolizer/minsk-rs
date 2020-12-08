@@ -158,7 +158,7 @@ impl Binder {
 
     fn bind_name_expression(&mut self, syntax: &NameExpressionSyntax) -> BoundExpression {
         let name = &syntax.identifier_token.text;
-        let variable = self.scope.read().try_lookup(name.clone());
+        let variable = self.scope.read().try_lookup(&name);
         if let Some(variable) = variable {
             BoundExpression::Variable(BoundVariableExpression { variable })
         } else {
@@ -177,13 +177,24 @@ impl Binder {
         let name = syntax.identifier_token.text.clone();
         let bound = self.bind_expression(&syntax.expression);
 
-        let variable = VariableSymbol {
-            name: name.clone(),
-            ty: bound.kind(),
+        let maybe_variable = self.scope.read().try_lookup(&name);
+        let variable = if let Some(v) = maybe_variable {
+            v
+        } else {
+            let v = VariableSymbol {
+                name: name.clone(),
+                ty: bound.kind(),
+            };
+            self.scope.write().try_declare(v.clone());
+            v
         };
-        if !self.scope.write().try_declare(variable.clone()) {
-            self.diagnostics
-                .report_variable_already_declared(syntax.identifier_token.span, &name);
+
+        if bound.kind() != variable.ty {
+            self.diagnostics.report_cannot_convert(
+                syntax.expression.span(),
+                bound.kind(),
+                variable.ty,
+            );
         }
 
         BoundExpression::Assignment(BoundAssignmentExpression {
