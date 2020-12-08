@@ -133,9 +133,9 @@ mod tests {
 
     fn try_evaluate(text: &str, expected: Option<MinskValue>) {
         let syntax_tree = SyntaxTree::parse(text.to_string());
-        let actual = Compilation::new(syntax_tree).evaluate(&mut {
-            let mut variables = HashMap::<VariableSymbol, MinskValue>::new();
-            variables
+
+        let actual = Compilation::evaluate(&syntax_tree, &mut {
+            HashMap::<VariableSymbol, MinskValue>::new()
         });
 
         asserting!("evaluated value")
