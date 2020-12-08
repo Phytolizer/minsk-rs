@@ -8,7 +8,6 @@ pub(super) mod bound_expression;
 pub(super) mod bound_expression_statement;
 pub(super) mod bound_global_scope;
 pub(super) mod bound_literal_expression;
-pub(super) mod bound_node;
 mod bound_scope;
 pub(super) mod bound_statement;
 pub(super) mod bound_unary_expression;

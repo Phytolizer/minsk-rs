@@ -24,16 +24,8 @@ impl BlockStatementSyntax {
         }
     }
 
-    pub(crate) fn open_brace_token(&self) -> &SyntaxToken {
-        &self.open_brace_token
-    }
-
     pub(crate) fn statements(&self) -> &[StatementSyntax] {
         &self.statements
-    }
-
-    pub(crate) fn close_brace_token(&self) -> &SyntaxToken {
-        &self.close_brace_token
     }
 
     pub(crate) fn span(&self) -> TextSpan {
