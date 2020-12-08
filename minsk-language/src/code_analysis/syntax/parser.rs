@@ -7,6 +7,7 @@ use super::{
     block_statement_syntax::BlockStatementSyntax, compilation_unit::CompilationUnit,
     expression_statement_syntax::ExpressionStatementSyntax,
     name_expression_syntax::NameExpressionSyntax, statement_syntax::StatementSyntax,
+    variable_declaration_syntax::VariableDeclarationSyntax,
 };
 
 use super::{
@@ -84,9 +85,26 @@ impl Parser {
     fn parse_statement(&mut self) -> StatementSyntax {
         if self.current().kind == SyntaxKind::OpenBrace {
             StatementSyntax::Block(self.parse_block_statement())
+        } else if self.current().kind == SyntaxKind::LetKeyword
+            || self.current().kind == SyntaxKind::VarKeyword
+        {
+            StatementSyntax::VariableDeclaration(self.parse_variable_declaration())
         } else {
             StatementSyntax::Expression(self.parse_expression_statement())
         }
+    }
+
+    fn parse_variable_declaration(&mut self) -> VariableDeclarationSyntax {
+        let expected = if self.current().kind == SyntaxKind::LetKeyword {
+            SyntaxKind::LetKeyword
+        } else {
+            SyntaxKind::VarKeyword
+        };
+        let keyword = self.match_token(expected);
+        let identifier = self.match_token(SyntaxKind::Identifier);
+        let equals = self.match_token(SyntaxKind::Equals);
+        let initializer = self.parse_expression();
+        VariableDeclarationSyntax::new(keyword, identifier, equals, initializer)
     }
 
     fn parse_block_statement(&mut self) -> BlockStatementSyntax {

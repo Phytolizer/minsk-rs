@@ -12,6 +12,8 @@ impl SyntaxFacts {
         match text {
             "true" => SyntaxKind::TrueKeyword,
             "false" => SyntaxKind::FalseKeyword,
+            "let" => SyntaxKind::LetKeyword,
+            "var" => SyntaxKind::VarKeyword,
             _ => SyntaxKind::Identifier,
         }
     }
@@ -34,6 +36,8 @@ impl SyntaxFacts {
             SyntaxKind::CloseBrace => Some("}"),
             SyntaxKind::FalseKeyword => Some("false"),
             SyntaxKind::TrueKeyword => Some("true"),
+            SyntaxKind::LetKeyword => Some("let"),
+            SyntaxKind::VarKeyword => Some("var"),
             _ => None,
         }
     }

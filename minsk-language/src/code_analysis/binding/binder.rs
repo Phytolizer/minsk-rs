@@ -14,7 +14,8 @@ use crate::{
             block_statement_syntax::BlockStatementSyntax, compilation_unit::CompilationUnit,
             expression_statement_syntax::ExpressionStatementSyntax,
             name_expression_syntax::NameExpressionSyntax, statement_syntax::StatementSyntax,
-            unary_expression_syntax::UnaryExpressionSyntax,
+            syntax_kind::SyntaxKind, unary_expression_syntax::UnaryExpressionSyntax,
+            variable_declaration_syntax::VariableDeclarationSyntax,
         },
         variable_symbol::VariableSymbol,
     },
@@ -28,7 +29,8 @@ use super::{
     bound_expression_statement::BoundExpressionStatement, bound_global_scope::BoundGlobalScope,
     bound_literal_expression::BoundLiteralExpression, bound_scope::BoundScope,
     bound_statement::BoundStatement, bound_unary_expression::BoundUnaryExpression,
-    bound_unary_operator::BoundUnaryOperator, bound_variable_expression::BoundVariableExpression,
+    bound_unary_operator::BoundUnaryOperator, bound_variable_declaration::BoundVariableDeclaration,
+    bound_variable_expression::BoundVariableExpression,
 };
 
 pub struct Binder {
@@ -97,16 +99,34 @@ impl Binder {
         match syntax {
             StatementSyntax::Block(b) => self.bind_block_statement(b),
             StatementSyntax::Expression(e) => self.bind_expression_statement(e),
+            StatementSyntax::VariableDeclaration(v) => self.bind_variable_declaration(v),
         }
+    }
+
+    fn bind_variable_declaration(&mut self, syntax: &VariableDeclarationSyntax) -> BoundStatement {
+        let name = &syntax.identifier().text;
+        let read_only = syntax.keyword_token().kind == SyntaxKind::LetKeyword;
+        let initializer = self.bind_expression(syntax.initializer());
+        let variable = VariableSymbol::new(name.to_string(), read_only, initializer.ty());
+
+        if !self.scope.write().try_declare(variable.clone()) {
+            self.diagnostics
+                .report_variable_already_declared(syntax.identifier().span, &name);
+        }
+
+        BoundStatement::VariableDeclaration(BoundVariableDeclaration::new(variable, initializer))
     }
 
     fn bind_block_statement(&mut self, syntax: &BlockStatementSyntax) -> BoundStatement {
         let mut statements = Vec::<BoundStatement>::new();
+        self.scope = Arc::new(RwLock::new(BoundScope::new(Some(self.scope.clone()))));
         for statement in syntax.statements() {
             let statement = self.bind_statement(statement);
             statements.push(statement);
         }
 
+        let parent = self.scope.read().parent().unwrap();
+        self.scope = parent;
         BoundStatement::Block(BoundBlockStatement::new(statements))
     }
 
@@ -136,7 +156,7 @@ impl Binder {
 
     fn bind_unary_expression(&mut self, syntax: &UnaryExpressionSyntax) -> BoundExpression {
         let operand = self.bind_expression(&syntax.operand);
-        let operator = BoundUnaryOperator::bind(syntax.operator_token.kind, operand.kind());
+        let operator = BoundUnaryOperator::bind(syntax.operator_token.kind, operand.ty());
         if let Some(op) = operator {
             BoundExpression::Unary(BoundUnaryExpression {
                 op,
@@ -146,7 +166,7 @@ impl Binder {
             self.diagnostics.report_undefined_unary_operator(
                 syntax.operator_token.span,
                 &syntax.operator_token.text,
-                operand.kind(),
+                operand.ty(),
             );
             operand
         }
@@ -155,8 +175,7 @@ impl Binder {
     fn bind_binary_expression(&mut self, syntax: &BinaryExpressionSyntax) -> BoundExpression {
         let left = self.bind_expression(&syntax.left);
         let right = self.bind_expression(&syntax.right);
-        let operator =
-            BoundBinaryOperator::bind(syntax.operator_token.kind, left.kind(), right.kind());
+        let operator = BoundBinaryOperator::bind(syntax.operator_token.kind, left.ty(), right.ty());
         if let Some(op) = operator {
             BoundExpression::Binary(BoundBinaryExpression {
                 left: Box::new(left),
@@ -167,8 +186,8 @@ impl Binder {
             self.diagnostics.report_undefined_binary_operator(
                 syntax.operator_token.span,
                 &syntax.operator_token.text,
-                left.kind(),
-                right.kind(),
+                left.ty(),
+                right.ty(),
             );
             left
         }
@@ -206,19 +225,21 @@ impl Binder {
         let variable = if let Some(v) = maybe_variable {
             v
         } else {
-            let v = VariableSymbol {
-                name,
-                ty: bound.kind(),
-            };
-            self.scope.write().try_declare(v.clone());
-            v
+            self.diagnostics
+                .report_undefined_name(syntax.identifier_token.span, &name);
+            return bound;
         };
 
-        if bound.kind() != variable.ty {
+        if variable.read_only() {
+            self.diagnostics
+                .report_cannot_assign(syntax.equals_token.span, &name);
+        }
+
+        if bound.ty() != variable.ty() {
             self.diagnostics.report_cannot_convert(
                 syntax.expression.span(),
-                bound.kind(),
-                variable.ty,
+                bound.ty(),
+                variable.ty(),
             );
         }
 

@@ -16,3 +16,4 @@ pub mod syntax_node;
 mod syntax_token;
 pub mod syntax_tree;
 pub(super) mod unary_expression_syntax;
+pub(super) mod variable_declaration_syntax;

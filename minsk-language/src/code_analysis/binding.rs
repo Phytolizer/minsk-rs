@@ -13,4 +13,5 @@ pub(super) mod bound_statement;
 pub(super) mod bound_unary_expression;
 mod bound_unary_operator;
 pub(super) mod bound_unary_operator_kind;
+pub(super) mod bound_variable_declaration;
 pub(super) mod bound_variable_expression;

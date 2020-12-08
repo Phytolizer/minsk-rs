@@ -5,12 +5,14 @@ use crate::code_analysis::text::text_span::TextSpan;
 use super::{
     block_statement_syntax::BlockStatementSyntax,
     expression_statement_syntax::ExpressionStatementSyntax,
+    variable_declaration_syntax::VariableDeclarationSyntax,
 };
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum StatementSyntax {
     Block(BlockStatementSyntax),
     Expression(ExpressionStatementSyntax),
+    VariableDeclaration(VariableDeclarationSyntax),
 }
 
 impl StatementSyntax {
@@ -18,6 +20,7 @@ impl StatementSyntax {
         match self {
             StatementSyntax::Block(b) => b.span(),
             StatementSyntax::Expression(e) => e.span(),
+            StatementSyntax::VariableDeclaration(v) => v.span(),
         }
     }
 }
@@ -27,6 +30,7 @@ impl Display for StatementSyntax {
         match self {
             StatementSyntax::Block(b) => write!(f, "{}", b),
             StatementSyntax::Expression(e) => write!(f, "{}", e),
+            StatementSyntax::VariableDeclaration(v) => write!(f, "{}", v),
         }
     }
 }

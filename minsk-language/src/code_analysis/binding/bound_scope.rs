@@ -17,12 +17,16 @@ impl BoundScope {
         }
     }
 
+    pub(super) fn parent(&self) -> Option<Arc<RwLock<BoundScope>>> {
+        self.parent.clone()
+    }
+
     pub(super) fn try_declare(&mut self, variable: VariableSymbol) -> bool {
-        if self.variables.contains_key(&variable.name) {
+        if self.variables.contains_key(variable.name()) {
             return false;
         }
 
-        self.variables.insert(variable.name.clone(), variable);
+        self.variables.insert(variable.name().to_string(), variable);
         true
     }
 

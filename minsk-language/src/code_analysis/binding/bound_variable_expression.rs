@@ -7,6 +7,6 @@ pub struct BoundVariableExpression {
 
 impl BoundVariableExpression {
     pub(super) fn kind(&self) -> MinskType {
-        self.variable.ty
+        self.variable.ty()
     }
 }

@@ -94,4 +94,14 @@ impl DiagnosticBag {
         let message = format!("Cannot convert {} to {}", from_type, to_type);
         self.report(span, message);
     }
+
+    pub(crate) fn report_variable_already_declared(&mut self, span: TextSpan, name: &str) {
+        let message = format!("Variable '{}' has already been declared", name);
+        self.report(span, message);
+    }
+
+    pub(crate) fn report_cannot_assign(&mut self, span: TextSpan, name: &str) {
+        let message = format!("Variable '{}' is immutable and cannot be assigned to", name);
+        self.report(span, message);
+    }
 }
