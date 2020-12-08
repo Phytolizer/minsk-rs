@@ -182,7 +182,7 @@ impl Binder {
             v
         } else {
             let v = VariableSymbol {
-                name: name.clone(),
+                name,
                 ty: bound.kind(),
             };
             self.scope.write().try_declare(v.clone());
