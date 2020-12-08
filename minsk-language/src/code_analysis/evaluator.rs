@@ -118,6 +118,18 @@ impl<'compilation> Evaluator<'compilation> {
             BoundBinaryOperatorKind::LogicalOr => {
                 MinskValue::Boolean(left.as_boolean().unwrap() || right.as_boolean().unwrap())
             }
+            BoundBinaryOperatorKind::LessThan => {
+                MinskValue::Boolean(left.as_integer().unwrap() < right.as_integer().unwrap())
+            }
+            BoundBinaryOperatorKind::LessOrEquals => {
+                MinskValue::Boolean(left.as_integer().unwrap() <= right.as_integer().unwrap())
+            }
+            BoundBinaryOperatorKind::GreaterThan => {
+                MinskValue::Boolean(left.as_integer().unwrap() > right.as_integer().unwrap())
+            }
+            BoundBinaryOperatorKind::GreaterOrEquals => {
+                MinskValue::Boolean(left.as_integer().unwrap() >= right.as_integer().unwrap())
+            }
         }
     }
 
@@ -355,6 +367,16 @@ mod tests {
             ("3 == 3", MinskValue::Boolean(true)),
             ("12 != 3", MinskValue::Boolean(true)),
             ("3 != 3", MinskValue::Boolean(false)),
+            ("3 < 4", MinskValue::Boolean(true)),
+            ("5 < 3", MinskValue::Boolean(false)),
+            ("3 <= 3", MinskValue::Boolean(true)),
+            ("3 <= 4", MinskValue::Boolean(true)),
+            ("3 <= 2", MinskValue::Boolean(false)),
+            ("4 > 3", MinskValue::Boolean(true)),
+            ("3 > 5", MinskValue::Boolean(false)),
+            ("3 >= 3", MinskValue::Boolean(true)),
+            ("3 >= 4", MinskValue::Boolean(false)),
+            ("3 >= 2", MinskValue::Boolean(true)),
             ("true == false", MinskValue::Boolean(false)),
             ("true == true", MinskValue::Boolean(true)),
             ("false == false", MinskValue::Boolean(true)),

@@ -20,6 +20,10 @@ pub(crate) enum SyntaxKind {
     Equals,
     EqualsEquals,
     BangEquals,
+    Less,
+    LessEquals,
+    Greater,
+    GreaterEquals,
 
     OpenParenthesis,
     CloseParenthesis,

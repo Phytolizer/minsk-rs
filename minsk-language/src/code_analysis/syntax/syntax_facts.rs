@@ -30,6 +30,10 @@ impl SyntaxFacts {
             SyntaxKind::PipePipe => Some("||"),
             SyntaxKind::EqualsEquals => Some("=="),
             SyntaxKind::BangEquals => Some("!="),
+            SyntaxKind::Less => Some("<"),
+            SyntaxKind::LessEquals => Some("<="),
+            SyntaxKind::Greater => Some(">"),
+            SyntaxKind::GreaterEquals => Some(">="),
             SyntaxKind::OpenParenthesis => Some("("),
             SyntaxKind::CloseParenthesis => Some(")"),
             SyntaxKind::OpenBrace => Some("{"),
@@ -48,7 +52,12 @@ impl SyntaxFactsExt for SyntaxKind {
         match self {
             SyntaxKind::Star | SyntaxKind::Slash => 5,
             SyntaxKind::Plus | SyntaxKind::Minus => 4,
-            SyntaxKind::EqualsEquals | SyntaxKind::BangEquals => 3,
+            SyntaxKind::EqualsEquals
+            | SyntaxKind::BangEquals
+            | SyntaxKind::Less
+            | SyntaxKind::LessEquals
+            | SyntaxKind::Greater
+            | SyntaxKind::GreaterEquals => 3,
             SyntaxKind::PipePipe => 2,
             SyntaxKind::AmpersandAmpersand => 1,
             _ => 0,
