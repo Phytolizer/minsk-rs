@@ -175,7 +175,7 @@ mod tests {
             ("false", MinskValue::Boolean(false)),
             ("!true", MinskValue::Boolean(false)),
             ("!false", MinskValue::Boolean(true)),
-            ("(a = 10) * a", MinskValue::Integer(100)),
+            ("{ var a = 0 (a = 10) * a }", MinskValue::Integer(100)),
         ]
         .iter()
         {
