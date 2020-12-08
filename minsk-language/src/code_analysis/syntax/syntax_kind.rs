@@ -23,6 +23,8 @@ pub(crate) enum SyntaxKind {
 
     OpenParenthesis,
     CloseParenthesis,
+    OpenBrace,
+    CloseBrace,
 
     // Keywowrds
     FalseKeyword,

@@ -36,7 +36,7 @@ impl Compilation {
         if !diagnostics.is_empty() {
             return Err(diagnostics);
         }
-        let value = Evaluator::new(variables).evaluate(self.global_scope().expression());
+        let value = Evaluator::new(variables).evaluate(self.global_scope().statement());
         Ok(value)
     }
 

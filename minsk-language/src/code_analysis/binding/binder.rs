@@ -10,8 +10,10 @@ use crate::{
         minsk_value::MinskValue,
         syntax::assignment_expression_syntax::AssignmentExpressionSyntax,
         syntax::{
-            binary_expression_syntax::BinaryExpressionSyntax, compilation_unit::CompilationUnit,
-            name_expression_syntax::NameExpressionSyntax,
+            binary_expression_syntax::BinaryExpressionSyntax,
+            block_statement_syntax::BlockStatementSyntax, compilation_unit::CompilationUnit,
+            expression_statement_syntax::ExpressionStatementSyntax,
+            name_expression_syntax::NameExpressionSyntax, statement_syntax::StatementSyntax,
             unary_expression_syntax::UnaryExpressionSyntax,
         },
         variable_symbol::VariableSymbol,
@@ -22,10 +24,11 @@ use super::{
     super::syntax::literal_expression_syntax::LiteralExpressionSyntax,
     bound_assignment_expression::BoundAssignmentExpression,
     bound_binary_expression::BoundBinaryExpression, bound_binary_operator::BoundBinaryOperator,
-    bound_expression::BoundExpression, bound_global_scope::BoundGlobalScope,
+    bound_block_statement::BoundBlockStatement, bound_expression::BoundExpression,
+    bound_expression_statement::BoundExpressionStatement, bound_global_scope::BoundGlobalScope,
     bound_literal_expression::BoundLiteralExpression, bound_scope::BoundScope,
-    bound_unary_expression::BoundUnaryExpression, bound_unary_operator::BoundUnaryOperator,
-    bound_variable_expression::BoundVariableExpression,
+    bound_statement::BoundStatement, bound_unary_expression::BoundUnaryExpression,
+    bound_unary_operator::BoundUnaryOperator, bound_variable_expression::BoundVariableExpression,
 };
 
 pub struct Binder {
@@ -47,7 +50,7 @@ impl Binder {
     ) -> BoundGlobalScope {
         let parent_scope = Self::create_parent_scopes(previous.clone());
         let mut binder = Binder::new(parent_scope);
-        let expression = binder.bind_expression(syntax.expression());
+        let statement = binder.bind_statement(syntax.statement());
         let variables = binder
             .scope
             .read()
@@ -60,7 +63,7 @@ impl Binder {
             diagnostics.append(&mut previous.diagnostics().collect::<Vec<_>>());
         }
 
-        BoundGlobalScope::new(previous, diagnostics, variables, expression)
+        BoundGlobalScope::new(previous, diagnostics, variables, statement)
     }
 
     pub(crate) fn create_parent_scopes(
@@ -90,7 +93,29 @@ impl Binder {
         self.diagnostics.iter()
     }
 
-    pub(super) fn bind_expression(&mut self, syntax: &ExpressionSyntax) -> BoundExpression {
+    fn bind_statement(&mut self, syntax: &StatementSyntax) -> BoundStatement {
+        match syntax {
+            StatementSyntax::Block(b) => self.bind_block_statement(b),
+            StatementSyntax::Expression(e) => self.bind_expression_statement(e),
+        }
+    }
+
+    fn bind_block_statement(&mut self, syntax: &BlockStatementSyntax) -> BoundStatement {
+        let mut statements = Vec::<BoundStatement>::new();
+        for statement in syntax.statements() {
+            let statement = self.bind_statement(statement);
+            statements.push(statement);
+        }
+
+        BoundStatement::Block(BoundBlockStatement::new(statements))
+    }
+
+    fn bind_expression_statement(&mut self, syntax: &ExpressionStatementSyntax) -> BoundStatement {
+        let expression = self.bind_expression(syntax.expression());
+        BoundStatement::Expression(BoundExpressionStatement::new(expression))
+    }
+
+    fn bind_expression(&mut self, syntax: &ExpressionSyntax) -> BoundExpression {
         match syntax {
             ExpressionSyntax::Literal(l) => self.bind_literal_expression(l),
             ExpressionSyntax::Unary(u) => self.bind_unary_expression(u),

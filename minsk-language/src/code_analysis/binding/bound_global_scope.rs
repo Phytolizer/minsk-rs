@@ -2,13 +2,13 @@ use std::sync::Arc;
 
 use crate::code_analysis::{diagnostic::Diagnostic, variable_symbol::VariableSymbol};
 
-use super::bound_expression::BoundExpression;
+use super::bound_statement::BoundStatement;
 
 pub(crate) struct BoundGlobalScope {
     previous: Option<Arc<BoundGlobalScope>>,
     diagnostics: Vec<Diagnostic>,
     variables: Vec<VariableSymbol>,
-    expression: BoundExpression,
+    statement: BoundStatement,
 }
 
 impl BoundGlobalScope {
@@ -16,13 +16,13 @@ impl BoundGlobalScope {
         previous: Option<Arc<BoundGlobalScope>>,
         diagnostics: Vec<Diagnostic>,
         variables: Vec<VariableSymbol>,
-        expression: BoundExpression,
+        statement: BoundStatement,
     ) -> Self {
         Self {
             previous,
             diagnostics,
             variables,
-            expression,
+            statement,
         }
     }
 
@@ -38,7 +38,7 @@ impl BoundGlobalScope {
         self.variables.iter().cloned()
     }
 
-    pub(crate) fn expression(&self) -> &BoundExpression {
-        &self.expression
+    pub(crate) fn statement(&self) -> &BoundStatement {
+        &self.statement
     }
 }

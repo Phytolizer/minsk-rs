@@ -2,24 +2,24 @@ use std::fmt::Display;
 
 use crate::code_analysis::text::text_span::TextSpan;
 
-use super::{expression_syntax::ExpressionSyntax, syntax_token::SyntaxToken};
+use super::{statement_syntax::StatementSyntax, syntax_token::SyntaxToken};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct CompilationUnit {
-    expression: ExpressionSyntax,
+    statement: StatementSyntax,
     end_of_file_token: SyntaxToken,
 }
 
 impl CompilationUnit {
-    pub fn new(expression: ExpressionSyntax, end_of_file_token: SyntaxToken) -> Self {
+    pub fn new(statement: StatementSyntax, end_of_file_token: SyntaxToken) -> Self {
         Self {
-            expression,
+            statement,
             end_of_file_token,
         }
     }
 
-    pub fn expression(&self) -> &ExpressionSyntax {
-        &self.expression
+    pub fn statement(&self) -> &StatementSyntax {
+        &self.statement
     }
 
     pub fn end_of_file_token(&self) -> &SyntaxToken {
@@ -28,7 +28,7 @@ impl CompilationUnit {
 
     pub fn span(&self) -> TextSpan {
         TextSpan {
-            start: self.expression.span().start,
+            start: self.statement.span().start,
             end: self.end_of_file_token.span.end,
         }
     }
@@ -36,7 +36,7 @@ impl CompilationUnit {
 
 impl Display for CompilationUnit {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.expression)?;
+        write!(f, "{}", self.statement)?;
         write!(f, "{}", self.end_of_file_token)?;
         Ok(())
     }

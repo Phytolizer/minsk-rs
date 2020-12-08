@@ -110,9 +110,11 @@ fn main() -> anyhow::Result<()> {
                 }
             }
             Ok(value) => {
-                stdout.execute(SetForegroundColor(Color::Magenta))?;
-                println!("{}", value);
-                stdout.execute(ResetColor)?;
+                if let Some(v) = value {
+                    stdout.execute(SetForegroundColor(Color::Magenta))?;
+                    println!("{}", v);
+                    stdout.execute(ResetColor)?;
+                }
                 previous = Some(compilation);
             }
         }
