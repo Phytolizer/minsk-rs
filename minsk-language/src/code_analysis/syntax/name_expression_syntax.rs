@@ -11,7 +11,7 @@ pub struct NameExpressionSyntax {
 
 impl NameExpressionSyntax {
     pub fn span(&self) -> TextSpan {
-        self.identifier_token.span.clone()
+        self.identifier_token.span
     }
 }
 

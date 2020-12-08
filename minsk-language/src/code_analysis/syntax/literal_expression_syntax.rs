@@ -21,7 +21,7 @@ impl LiteralExpressionSyntax {
     }
 
     pub fn span(&self) -> TextSpan {
-        self.literal_token.span.clone()
+        self.literal_token.span
     }
 }
 

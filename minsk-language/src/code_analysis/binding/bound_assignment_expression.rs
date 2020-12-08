@@ -10,6 +10,6 @@ pub struct BoundAssignmentExpression {
 
 impl BoundAssignmentExpression {
     pub(super) fn kind(&self) -> MinskType {
-        self.expression.kind()
+        self.expression.ty()
     }
 }

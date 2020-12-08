@@ -75,6 +75,14 @@ impl Lexer {
                 self.kind = SyntaxKind::CloseParenthesis;
                 self.next();
             }
+            '{' => {
+                self.kind = SyntaxKind::OpenBrace;
+                self.next();
+            }
+            '}' => {
+                self.kind = SyntaxKind::CloseBrace;
+                self.next();
+            }
             '!' => {
                 if self.lookahead() == '=' {
                     self.kind = SyntaxKind::BangEquals;

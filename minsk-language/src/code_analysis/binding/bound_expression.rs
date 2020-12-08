@@ -20,7 +20,7 @@ pub enum BoundExpression {
 }
 
 impl BoundExpression {
-    pub(super) fn kind(&self) -> MinskType {
+    pub(super) fn ty(&self) -> MinskType {
         match self {
             BoundExpression::Binary(b) => b.kind(),
             BoundExpression::Literal(l) => l.kind(),

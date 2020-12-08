@@ -3,8 +3,10 @@ use std::collections::HashMap;
 use super::{
     binding::{
         bound_assignment_expression::BoundAssignmentExpression,
-        bound_binary_expression::BoundBinaryExpression,
+        bound_binary_expression::BoundBinaryExpression, bound_block_statement::BoundBlockStatement,
+        bound_expression_statement::BoundExpressionStatement, bound_statement::BoundStatement,
         bound_unary_expression::BoundUnaryExpression,
+        bound_variable_declaration::BoundVariableDeclaration,
         bound_variable_expression::BoundVariableExpression,
     },
     minsk_value::MinskValue,
@@ -19,15 +21,44 @@ use super::binding::{
 
 pub struct Evaluator<'compilation> {
     variables: &'compilation mut HashMap<VariableSymbol, MinskValue>,
+    last_value: Option<MinskValue>,
 }
 
 impl<'compilation> Evaluator<'compilation> {
     pub fn new(variables: &'compilation mut HashMap<VariableSymbol, MinskValue>) -> Self {
-        Self { variables }
+        Self {
+            variables,
+            last_value: None,
+        }
     }
 
-    pub fn evaluate(&mut self, root: &BoundExpression) -> MinskValue {
-        self.evaluate_expression(root)
+    pub fn evaluate(&mut self, root: &BoundStatement) -> Option<MinskValue> {
+        self.evaluate_statement(root);
+        self.last_value.clone()
+    }
+
+    fn evaluate_statement(&mut self, statement: &BoundStatement) {
+        match statement {
+            BoundStatement::Block(b) => self.evaluate_block_statement(b),
+            BoundStatement::Expression(e) => self.evaluate_expression_statement(e),
+            BoundStatement::VariableDeclaration(v) => self.evaluate_variable_declaration(v),
+        }
+    }
+
+    fn evaluate_variable_declaration(&mut self, v: &BoundVariableDeclaration) {
+        let value = self.evaluate_expression(v.initializer());
+        self.variables.insert(v.variable().clone(), value.clone());
+        self.last_value = Some(value);
+    }
+
+    fn evaluate_block_statement(&mut self, b: &BoundBlockStatement) {
+        for statement in b.statements() {
+            self.evaluate(statement);
+        }
+    }
+
+    fn evaluate_expression_statement(&mut self, e: &BoundExpressionStatement) {
+        self.last_value = Some(self.evaluate_expression(e.expression()));
     }
 
     fn evaluate_expression(&mut self, root: &BoundExpression) -> MinskValue {
@@ -108,11 +139,11 @@ mod tests {
     use super::*;
     use spectral::prelude::*;
 
-    fn try_evaluate(text: &str, expected: MinskValue) {
+    fn try_evaluate(text: &str, expected: Option<MinskValue>) {
         let syntax_tree = SyntaxTree::parse(text.to_string());
-        let actual = Compilation::evaluate(&syntax_tree, &mut {
-            HashMap::<VariableSymbol, MinskValue>::new()
-        });
+
+        let actual = Compilation::new(syntax_tree)
+            .evaluate(&mut HashMap::<VariableSymbol, MinskValue>::new());
 
         asserting!("evaluated value")
             .that(&actual)
@@ -144,12 +175,12 @@ mod tests {
             ("false", MinskValue::Boolean(false)),
             ("!true", MinskValue::Boolean(false)),
             ("!false", MinskValue::Boolean(true)),
-            ("(a = 10) * a", MinskValue::Integer(100)),
+            ("{ var a = 0 (a = 10) * a }", MinskValue::Integer(100)),
         ]
         .iter()
         {
             println!("{} => {}", text, expected);
-            try_evaluate(text, expected.clone());
+            try_evaluate(text, Some(expected.clone()));
         }
     }
 }

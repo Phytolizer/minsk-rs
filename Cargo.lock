@@ -172,6 +172,7 @@ name = "minsk-language"
 version = "0.1.0"
 dependencies = [
  "itertools",
+ "parking_lot",
  "pretty_assertions",
  "spectral",
  "strum",

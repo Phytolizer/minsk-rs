@@ -23,10 +23,14 @@ pub(crate) enum SyntaxKind {
 
     OpenParenthesis,
     CloseParenthesis,
+    OpenBrace,
+    CloseBrace,
 
     // Keywowrds
     FalseKeyword,
     TrueKeyword,
+    LetKeyword,
+    VarKeyword,
 }
 
 impl Display for SyntaxKind {

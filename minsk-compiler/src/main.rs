@@ -19,14 +19,18 @@ fn main() -> anyhow::Result<()> {
     let mut text_builder = String::new();
     let mut show_tree = false;
     let mut variables = HashMap::<VariableSymbol, MinskValue>::new();
+    let mut previous: Option<Compilation> = None;
 
     loop {
         line.clear();
+        print!("minsk");
+        stdout.execute(SetForegroundColor(Color::Green))?;
         if text_builder.is_empty() {
-            print!("minsk:> ");
+            print!(":> ");
         } else {
-            print!("minsk:| ");
+            print!(":| ");
         }
+        stdout.execute(ResetColor)?;
         stdout.flush()?;
         if reader.read_line(&mut line)? == 0 {
             break;
@@ -50,6 +54,7 @@ fn main() -> anyhow::Result<()> {
                     );
                     continue;
                 }
+                "#reset" => previous = None,
                 _ => {}
             }
         }
@@ -58,36 +63,39 @@ fn main() -> anyhow::Result<()> {
         let text = text_builder.clone();
         let tree = SyntaxTree::parse(text.clone());
 
-        if tree.diagnostics().count() > 0 {
+        if !line.trim().is_empty() && tree.diagnostics().count() > 0 {
             continue;
         }
         if show_tree {
             println!("{}", tree.root());
         }
-        let evaluation_result = Compilation::evaluate(&tree, &mut variables);
+        let mut compilation = if let Some(previous) = previous.clone() {
+            previous.continue_with(tree.clone())
+        } else {
+            Compilation::new(tree.clone())
+        };
+        let evaluation_result = compilation.evaluate(&mut variables);
         match evaluation_result {
             Err(diagnostics) => {
-                let text = &tree.text;
+                let text = tree.text();
                 for diagnostic in diagnostics {
                     let line_index = text.get_line_index(diagnostic.span.start).unwrap();
                     let line_number = line_index + 1;
-                    let line = tree.text.lines()[line_index];
+                    let line = tree.text().lines()[line_index];
                     let character = diagnostic.span.start - text.lines()[line_index].start() + 1;
                     println!();
                     stdout.execute(SetForegroundColor(Color::DarkRed))?;
                     print!("({}, {}): ", line_number, character);
                     println!("{}", diagnostic);
                     stdout.execute(ResetColor)?;
-                    let prefix = &tree.text[TextSpan {
+                    let prefix = &tree.text()[TextSpan {
                         start: line.start(),
                         end: diagnostic.span.start,
                     }]
                     .iter()
                     .collect::<String>();
-                    let error = &tree.text[diagnostic.span.clone()]
-                        .iter()
-                        .collect::<String>();
-                    let suffix = &tree.text[TextSpan {
+                    let error = &tree.text()[diagnostic.span].iter().collect::<String>();
+                    let suffix = &tree.text()[TextSpan {
                         start: diagnostic.span.end,
                         end: line.end(),
                     }]
@@ -102,7 +110,12 @@ fn main() -> anyhow::Result<()> {
                 }
             }
             Ok(value) => {
-                println!("{}", value);
+                if let Some(v) = value {
+                    stdout.execute(SetForegroundColor(Color::Magenta))?;
+                    println!("{}", v);
+                    stdout.execute(ResetColor)?;
+                }
+                previous = Some(compilation);
             }
         }
 
