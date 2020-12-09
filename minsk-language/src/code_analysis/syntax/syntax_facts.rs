@@ -17,6 +17,8 @@ impl SyntaxFacts {
             "if" => SyntaxKind::IfKeyword,
             "else" => SyntaxKind::ElseKeyword,
             "while" => SyntaxKind::WhileKeyword,
+            "for" => SyntaxKind::ForKeyword,
+            "to" => SyntaxKind::ToKeyword,
             _ => SyntaxKind::Identifier,
         }
     }
@@ -48,6 +50,8 @@ impl SyntaxFacts {
             SyntaxKind::IfKeyword => Some("if"),
             SyntaxKind::ElseKeyword => Some("else"),
             SyntaxKind::WhileKeyword => Some("while"),
+            SyntaxKind::ForKeyword => Some("for"),
+            SyntaxKind::ToKeyword => Some("to"),
             _ => None,
         }
     }

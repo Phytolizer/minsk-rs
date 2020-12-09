@@ -38,6 +38,8 @@ pub(crate) enum SyntaxKind {
     IfKeyword,
     ElseKeyword,
     WhileKeyword,
+    ForKeyword,
+    ToKeyword,
 }
 
 impl Display for SyntaxKind {

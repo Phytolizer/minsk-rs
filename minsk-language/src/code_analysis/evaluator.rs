@@ -4,7 +4,8 @@ use super::{
     binding::{
         bound_assignment_expression::BoundAssignmentExpression,
         bound_binary_expression::BoundBinaryExpression, bound_block_statement::BoundBlockStatement,
-        bound_expression_statement::BoundExpressionStatement, bound_if_statement::BoundIfStatement,
+        bound_expression_statement::BoundExpressionStatement,
+        bound_for_statement::BoundForStatement, bound_if_statement::BoundIfStatement,
         bound_statement::BoundStatement, bound_unary_expression::BoundUnaryExpression,
         bound_variable_declaration::BoundVariableDeclaration,
         bound_variable_expression::BoundVariableExpression,
@@ -42,9 +43,23 @@ impl<'compilation> Evaluator<'compilation> {
         match statement {
             BoundStatement::Block(b) => self.evaluate_block_statement(b),
             BoundStatement::Expression(e) => self.evaluate_expression_statement(e),
+            BoundStatement::For(f) => self.evaluate_for_statement(f),
             BoundStatement::If(i) => self.evaluate_if_statement(i),
             BoundStatement::VariableDeclaration(v) => self.evaluate_variable_declaration(v),
             BoundStatement::While(w) => self.evaluate_while_statement(w),
+        }
+    }
+
+    fn evaluate_for_statement(&mut self, f: &BoundForStatement) {
+        let lower_bound = self.evaluate_expression(f.lower_bound());
+        let upper_bound = self.evaluate_expression(f.upper_bound());
+        self.variables
+            .insert(f.variable().clone(), lower_bound.clone());
+
+        for i in lower_bound.as_integer().unwrap()..=upper_bound.as_integer().unwrap() {
+            self.variables
+                .insert(f.variable().clone(), MinskValue::Integer(i));
+            self.evaluate_statement(f.body());
         }
     }
 
@@ -320,6 +335,66 @@ mod tests {
         assert_has_diagnostics(text, diagnostics);
     }
 
+    #[test]
+    fn if_statement_reports_cannot_convert() {
+        let text = "
+            {
+                var x = 0
+                if [10]
+                    x = 10
+            }
+            ";
+        let diagnostics = "
+            Cannot convert Integer to Boolean
+            ";
+        assert_has_diagnostics(text, diagnostics);
+    }
+
+    #[test]
+    fn while_statement_reports_cannot_convert() {
+        let text = "
+            {
+                var x = 0
+                while [10]
+                    x = 10
+            }
+            ";
+        let diagnostics = "
+            Cannot convert Integer to Boolean
+            ";
+        assert_has_diagnostics(text, diagnostics);
+    }
+
+    #[test]
+    fn for_statement_reports_cannot_convert_lower_bound() {
+        let text = "
+            {
+                var x = 0
+                for i = [false] to 10
+                    x = x + 10
+            }
+            ";
+        let diagnostics = "
+            Cannot convert Boolean to Integer
+            ";
+        assert_has_diagnostics(text, diagnostics);
+    }
+
+    #[test]
+    fn for_statement_reports_cannot_convert_upper_bound() {
+        let text = "
+            {
+                var x = 0
+                for i = 1 to [true]
+                    x = x + 10
+            }
+            ";
+        let diagnostics = "
+            Cannot convert Boolean to Integer
+            ";
+        assert_has_diagnostics(text, diagnostics);
+    }
+
     fn assert_has_diagnostics(text: &str, diagnostics: &str) {
         let annotated_text = AnnotatedText::parse(text);
         let syntax_tree = SyntaxTree::parse(annotated_text.text.clone());
@@ -419,7 +494,8 @@ mod tests {
                 "{ var a = 0 if a != 0 a = 10 else a = 5 a }",
                 MinskValue::Integer(5),
             ),
-            ("{ var i = 10 var result = 0 while i > 0 { result = result + i i = i - 1 } result }", MinskValue::Integer(55))
+            ("{ var i = 10 var result = 0 while i > 0 { result = result + i i = i - 1 } result }", MinskValue::Integer(55)),
+            ("{ var result = 0 for i = 1 to 10 { result = result + i } result }", MinskValue::Integer(55))
         ]
         .iter()
         {

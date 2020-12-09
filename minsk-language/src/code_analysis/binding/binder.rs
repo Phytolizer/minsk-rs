@@ -14,9 +14,9 @@ use crate::{
             binary_expression_syntax::BinaryExpressionSyntax,
             block_statement_syntax::BlockStatementSyntax, compilation_unit::CompilationUnit,
             expression_statement_syntax::ExpressionStatementSyntax,
-            if_statement_syntax::IfStatementSyntax, name_expression_syntax::NameExpressionSyntax,
-            statement_syntax::StatementSyntax, syntax_kind::SyntaxKind,
-            unary_expression_syntax::UnaryExpressionSyntax,
+            for_statement_syntax::ForStatementSyntax, if_statement_syntax::IfStatementSyntax,
+            name_expression_syntax::NameExpressionSyntax, statement_syntax::StatementSyntax,
+            syntax_kind::SyntaxKind, unary_expression_syntax::UnaryExpressionSyntax,
             variable_declaration_syntax::VariableDeclarationSyntax,
             while_statement_syntax::WhileStatementSyntax,
         },
@@ -29,11 +29,11 @@ use super::{
     bound_assignment_expression::BoundAssignmentExpression,
     bound_binary_expression::BoundBinaryExpression, bound_binary_operator::BoundBinaryOperator,
     bound_block_statement::BoundBlockStatement, bound_expression::BoundExpression,
-    bound_expression_statement::BoundExpressionStatement, bound_global_scope::BoundGlobalScope,
-    bound_if_statement::BoundIfStatement, bound_literal_expression::BoundLiteralExpression,
-    bound_scope::BoundScope, bound_statement::BoundStatement,
-    bound_unary_expression::BoundUnaryExpression, bound_unary_operator::BoundUnaryOperator,
-    bound_variable_declaration::BoundVariableDeclaration,
+    bound_expression_statement::BoundExpressionStatement, bound_for_statement::BoundForStatement,
+    bound_global_scope::BoundGlobalScope, bound_if_statement::BoundIfStatement,
+    bound_literal_expression::BoundLiteralExpression, bound_scope::BoundScope,
+    bound_statement::BoundStatement, bound_unary_expression::BoundUnaryExpression,
+    bound_unary_operator::BoundUnaryOperator, bound_variable_declaration::BoundVariableDeclaration,
     bound_variable_expression::BoundVariableExpression, bound_while_statement::BoundWhileStatement,
 };
 
@@ -106,7 +106,34 @@ impl Binder {
             StatementSyntax::If(i) => self.bind_if_statement(i),
             StatementSyntax::VariableDeclaration(v) => self.bind_variable_declaration(v),
             StatementSyntax::While(w) => self.bind_while_statement(w),
+            StatementSyntax::For(f) => self.bind_for_statement(f),
         }
+    }
+
+    fn bind_for_statement(&mut self, syntax: &ForStatementSyntax) -> BoundStatement {
+        let lower_bound = self.bind_expression_with_type(syntax.lower_bound(), MinskType::Integer);
+        let upper_bound = self.bind_expression_with_type(syntax.upper_bound(), MinskType::Integer);
+
+        self.scope = Arc::new(RwLock::new(BoundScope::new(Some(self.scope.clone()))));
+
+        let name = syntax.identifier().text.clone();
+        let variable = VariableSymbol::new(name.clone(), true, MinskType::Integer);
+        if !self.scope.write().try_declare(variable.clone()) {
+            self.diagnostics
+                .report_variable_already_declared(syntax.identifier().span, &name);
+        }
+
+        let body = self.bind_statement(syntax.body());
+
+        let parent = self.scope.read().parent().unwrap();
+        self.scope = parent;
+
+        BoundStatement::For(BoundForStatement::new(
+            variable,
+            lower_bound,
+            upper_bound,
+            Box::new(body),
+        ))
     }
 
     fn bind_while_statement(&mut self, syntax: &WhileStatementSyntax) -> BoundStatement {
