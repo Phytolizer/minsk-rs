@@ -16,6 +16,7 @@ impl SyntaxFacts {
             "var" => SyntaxKind::VarKeyword,
             "if" => SyntaxKind::IfKeyword,
             "else" => SyntaxKind::ElseKeyword,
+            "while" => SyntaxKind::WhileKeyword,
             _ => SyntaxKind::Identifier,
         }
     }
@@ -46,6 +47,7 @@ impl SyntaxFacts {
             SyntaxKind::VarKeyword => Some("var"),
             SyntaxKind::IfKeyword => Some("if"),
             SyntaxKind::ElseKeyword => Some("else"),
+            SyntaxKind::WhileKeyword => Some("while"),
             _ => None,
         }
     }

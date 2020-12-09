@@ -18,3 +18,4 @@ mod syntax_token;
 pub mod syntax_tree;
 pub(super) mod unary_expression_syntax;
 pub(super) mod variable_declaration_syntax;
+pub(super) mod while_statement_syntax;

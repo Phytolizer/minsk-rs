@@ -16,3 +16,4 @@ mod bound_unary_operator;
 pub(super) mod bound_unary_operator_kind;
 pub(super) mod bound_variable_declaration;
 pub(super) mod bound_variable_expression;
+pub(super) mod bound_while_statement;

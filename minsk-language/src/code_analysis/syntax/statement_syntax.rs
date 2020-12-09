@@ -6,6 +6,7 @@ use super::{
     block_statement_syntax::BlockStatementSyntax,
     expression_statement_syntax::ExpressionStatementSyntax, if_statement_syntax::IfStatementSyntax,
     variable_declaration_syntax::VariableDeclarationSyntax,
+    while_statement_syntax::WhileStatementSyntax,
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -14,6 +15,7 @@ pub enum StatementSyntax {
     Expression(ExpressionStatementSyntax),
     If(IfStatementSyntax),
     VariableDeclaration(VariableDeclarationSyntax),
+    While(WhileStatementSyntax),
 }
 
 impl StatementSyntax {
@@ -23,6 +25,7 @@ impl StatementSyntax {
             StatementSyntax::Expression(e) => e.span(),
             StatementSyntax::VariableDeclaration(v) => v.span(),
             StatementSyntax::If(i) => i.span(),
+            StatementSyntax::While(w) => w.span(),
         }
     }
 }
@@ -34,6 +37,7 @@ impl Display for StatementSyntax {
             StatementSyntax::Expression(e) => write!(f, "{}", e),
             StatementSyntax::VariableDeclaration(v) => write!(f, "{}", v),
             StatementSyntax::If(i) => write!(f, "{}", i),
+            StatementSyntax::While(w) => write!(f, "{}", w),
         }
     }
 }

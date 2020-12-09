@@ -12,6 +12,7 @@ use super::{
     name_expression_syntax::NameExpressionSyntax,
     statement_syntax::StatementSyntax,
     variable_declaration_syntax::VariableDeclarationSyntax,
+    while_statement_syntax::WhileStatementSyntax,
 };
 
 use super::{
@@ -93,8 +94,16 @@ impl Parser {
                 StatementSyntax::VariableDeclaration(self.parse_variable_declaration())
             }
             SyntaxKind::IfKeyword => StatementSyntax::If(self.parse_if_statement()),
+            SyntaxKind::WhileKeyword => StatementSyntax::While(self.parse_while_statement()),
             _ => StatementSyntax::Expression(self.parse_expression_statement()),
         }
+    }
+
+    fn parse_while_statement(&mut self) -> WhileStatementSyntax {
+        let keyword = self.match_token(SyntaxKind::WhileKeyword);
+        let condition = self.parse_expression();
+        let body = self.parse_statement();
+        WhileStatementSyntax::new(keyword, condition, Box::new(body))
     }
 
     fn parse_if_statement(&mut self) -> IfStatementSyntax {

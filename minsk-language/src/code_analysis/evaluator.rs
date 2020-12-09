@@ -8,6 +8,7 @@ use super::{
         bound_statement::BoundStatement, bound_unary_expression::BoundUnaryExpression,
         bound_variable_declaration::BoundVariableDeclaration,
         bound_variable_expression::BoundVariableExpression,
+        bound_while_statement::BoundWhileStatement,
     },
     minsk_value::MinskValue,
     variable_symbol::VariableSymbol,
@@ -41,8 +42,19 @@ impl<'compilation> Evaluator<'compilation> {
         match statement {
             BoundStatement::Block(b) => self.evaluate_block_statement(b),
             BoundStatement::Expression(e) => self.evaluate_expression_statement(e),
-            BoundStatement::VariableDeclaration(v) => self.evaluate_variable_declaration(v),
             BoundStatement::If(i) => self.evaluate_if_statement(i),
+            BoundStatement::VariableDeclaration(v) => self.evaluate_variable_declaration(v),
+            BoundStatement::While(w) => self.evaluate_while_statement(w),
+        }
+    }
+
+    fn evaluate_while_statement(&mut self, w: &BoundWhileStatement) {
+        while self
+            .evaluate_expression(w.condition())
+            .as_boolean()
+            .unwrap()
+        {
+            self.evaluate_statement(w.body());
         }
     }
 
@@ -407,6 +419,7 @@ mod tests {
                 "{ var a = 0 if a != 0 a = 10 else a = 5 a }",
                 MinskValue::Integer(5),
             ),
+            ("{ var i = 10 var result = 0 while i > 0 { result = result + i i = i - 1 } result }", MinskValue::Integer(55))
         ]
         .iter()
         {

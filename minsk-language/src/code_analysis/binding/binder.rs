@@ -18,6 +18,7 @@ use crate::{
             statement_syntax::StatementSyntax, syntax_kind::SyntaxKind,
             unary_expression_syntax::UnaryExpressionSyntax,
             variable_declaration_syntax::VariableDeclarationSyntax,
+            while_statement_syntax::WhileStatementSyntax,
         },
         variable_symbol::VariableSymbol,
     },
@@ -33,7 +34,7 @@ use super::{
     bound_scope::BoundScope, bound_statement::BoundStatement,
     bound_unary_expression::BoundUnaryExpression, bound_unary_operator::BoundUnaryOperator,
     bound_variable_declaration::BoundVariableDeclaration,
-    bound_variable_expression::BoundVariableExpression,
+    bound_variable_expression::BoundVariableExpression, bound_while_statement::BoundWhileStatement,
 };
 
 pub struct Binder {
@@ -102,9 +103,16 @@ impl Binder {
         match syntax {
             StatementSyntax::Block(b) => self.bind_block_statement(b),
             StatementSyntax::Expression(e) => self.bind_expression_statement(e),
-            StatementSyntax::VariableDeclaration(v) => self.bind_variable_declaration(v),
             StatementSyntax::If(i) => self.bind_if_statement(i),
+            StatementSyntax::VariableDeclaration(v) => self.bind_variable_declaration(v),
+            StatementSyntax::While(w) => self.bind_while_statement(w),
         }
+    }
+
+    fn bind_while_statement(&mut self, syntax: &WhileStatementSyntax) -> BoundStatement {
+        let condition = self.bind_expression_with_type(syntax.condition(), MinskType::Boolean);
+        let body = self.bind_statement(syntax.body());
+        BoundStatement::While(BoundWhileStatement::new(condition, Box::new(body)))
     }
 
     fn bind_if_statement(&mut self, syntax: &IfStatementSyntax) -> BoundStatement {
