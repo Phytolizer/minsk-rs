@@ -4,6 +4,7 @@ pub(super) mod block_statement_syntax;
 pub mod compilation_unit;
 pub(super) mod expression_statement_syntax;
 pub(super) mod expression_syntax;
+pub(super) mod if_statement_syntax;
 mod lexer;
 pub(super) mod literal_expression_syntax;
 pub(super) mod name_expression_syntax;

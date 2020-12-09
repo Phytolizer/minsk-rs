@@ -35,6 +35,8 @@ pub(crate) enum SyntaxKind {
     TrueKeyword,
     LetKeyword,
     VarKeyword,
+    IfKeyword,
+    ElseKeyword,
 }
 
 impl Display for SyntaxKind {

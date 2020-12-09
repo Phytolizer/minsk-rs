@@ -3,10 +3,14 @@ use unary_expression_syntax::UnaryExpressionSyntax;
 use crate::code_analysis::{diagnostic_bag::DiagnosticBag, text::source_text::SourceText};
 
 use super::{
-    super::minsk_value::MinskValue, assignment_expression_syntax::AssignmentExpressionSyntax,
-    block_statement_syntax::BlockStatementSyntax, compilation_unit::CompilationUnit,
+    super::minsk_value::MinskValue,
+    assignment_expression_syntax::AssignmentExpressionSyntax,
+    block_statement_syntax::BlockStatementSyntax,
+    compilation_unit::CompilationUnit,
     expression_statement_syntax::ExpressionStatementSyntax,
-    name_expression_syntax::NameExpressionSyntax, statement_syntax::StatementSyntax,
+    if_statement_syntax::{ElseClauseSyntax, IfStatementSyntax},
+    name_expression_syntax::NameExpressionSyntax,
+    statement_syntax::StatementSyntax,
     variable_declaration_syntax::VariableDeclarationSyntax,
 };
 
@@ -83,15 +87,32 @@ impl Parser {
     }
 
     fn parse_statement(&mut self) -> StatementSyntax {
-        if self.current().kind == SyntaxKind::OpenBrace {
-            StatementSyntax::Block(self.parse_block_statement())
-        } else if self.current().kind == SyntaxKind::LetKeyword
-            || self.current().kind == SyntaxKind::VarKeyword
-        {
-            StatementSyntax::VariableDeclaration(self.parse_variable_declaration())
-        } else {
-            StatementSyntax::Expression(self.parse_expression_statement())
+        match self.current().kind {
+            SyntaxKind::OpenBrace => StatementSyntax::Block(self.parse_block_statement()),
+            SyntaxKind::LetKeyword | SyntaxKind::VarKeyword => {
+                StatementSyntax::VariableDeclaration(self.parse_variable_declaration())
+            }
+            SyntaxKind::IfKeyword => StatementSyntax::If(self.parse_if_statement()),
+            _ => StatementSyntax::Expression(self.parse_expression_statement()),
         }
+    }
+
+    fn parse_if_statement(&mut self) -> IfStatementSyntax {
+        let keyword = self.match_token(SyntaxKind::IfKeyword);
+        let condition = self.parse_expression();
+        let statement = self.parse_statement();
+        let else_clause = self.parse_optional_else_clause();
+        IfStatementSyntax::new(keyword, condition, Box::new(statement), else_clause)
+    }
+
+    fn parse_optional_else_clause(&mut self) -> Option<ElseClauseSyntax> {
+        if self.current().kind != SyntaxKind::ElseKeyword {
+            return None;
+        }
+
+        let keyword = self.next_token();
+        let statement = self.parse_statement();
+        Some(ElseClauseSyntax::new(keyword, Box::new(statement)))
     }
 
     fn parse_variable_declaration(&mut self) -> VariableDeclarationSyntax {

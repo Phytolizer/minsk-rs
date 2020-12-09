@@ -14,6 +14,8 @@ impl SyntaxFacts {
             "false" => SyntaxKind::FalseKeyword,
             "let" => SyntaxKind::LetKeyword,
             "var" => SyntaxKind::VarKeyword,
+            "if" => SyntaxKind::IfKeyword,
+            "else" => SyntaxKind::ElseKeyword,
             _ => SyntaxKind::Identifier,
         }
     }
@@ -42,6 +44,8 @@ impl SyntaxFacts {
             SyntaxKind::TrueKeyword => Some("true"),
             SyntaxKind::LetKeyword => Some("let"),
             SyntaxKind::VarKeyword => Some("var"),
+            SyntaxKind::IfKeyword => Some("if"),
+            SyntaxKind::ElseKeyword => Some("else"),
             _ => None,
         }
     }

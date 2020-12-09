@@ -4,8 +4,8 @@ use super::{
     binding::{
         bound_assignment_expression::BoundAssignmentExpression,
         bound_binary_expression::BoundBinaryExpression, bound_block_statement::BoundBlockStatement,
-        bound_expression_statement::BoundExpressionStatement, bound_statement::BoundStatement,
-        bound_unary_expression::BoundUnaryExpression,
+        bound_expression_statement::BoundExpressionStatement, bound_if_statement::BoundIfStatement,
+        bound_statement::BoundStatement, bound_unary_expression::BoundUnaryExpression,
         bound_variable_declaration::BoundVariableDeclaration,
         bound_variable_expression::BoundVariableExpression,
     },
@@ -42,6 +42,16 @@ impl<'compilation> Evaluator<'compilation> {
             BoundStatement::Block(b) => self.evaluate_block_statement(b),
             BoundStatement::Expression(e) => self.evaluate_expression_statement(e),
             BoundStatement::VariableDeclaration(v) => self.evaluate_variable_declaration(v),
+            BoundStatement::If(i) => self.evaluate_if_statement(i),
+        }
+    }
+
+    fn evaluate_if_statement(&mut self, i: &BoundIfStatement) {
+        let condition = self.evaluate_expression(i.condition());
+        if condition.as_boolean().unwrap() {
+            self.evaluate_statement(i.then_statement());
+        } else if let Some(e) = i.else_statement() {
+            self.evaluate_statement(e);
         }
     }
 
@@ -387,6 +397,16 @@ mod tests {
             ("!true", MinskValue::Boolean(false)),
             ("!false", MinskValue::Boolean(true)),
             ("{ var a = 0 (a = 10) * a }", MinskValue::Integer(100)),
+            ("{ var a = 0 if a == 0 a = 10 a }", MinskValue::Integer(10)),
+            ("{ var a = 0 if a != 0 a = 10 a }", MinskValue::Integer(0)),
+            (
+                "{ var a = 0 if a == 0 a = 10 else a = 5 a }",
+                MinskValue::Integer(10),
+            ),
+            (
+                "{ var a = 0 if a != 0 a = 10 else a = 5 a }",
+                MinskValue::Integer(5),
+            ),
         ]
         .iter()
         {

@@ -7,6 +7,7 @@ pub(super) mod bound_block_statement;
 pub(super) mod bound_expression;
 pub(super) mod bound_expression_statement;
 pub(super) mod bound_global_scope;
+pub(super) mod bound_if_statement;
 pub(super) mod bound_literal_expression;
 mod bound_scope;
 pub(super) mod bound_statement;
