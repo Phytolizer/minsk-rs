@@ -11,6 +11,7 @@ use super::{
         bound_variable_expression::BoundVariableExpression,
         bound_while_statement::BoundWhileStatement,
     },
+    minsk_type::MinskType,
     minsk_value::MinskValue,
     variable_symbol::VariableSymbol,
 };
@@ -120,6 +121,9 @@ impl<'compilation> Evaluator<'compilation> {
             BoundUnaryOperatorKind::LogicalNegation => {
                 MinskValue::Boolean(!operand.as_boolean().unwrap())
             }
+            BoundUnaryOperatorKind::OnesComplement => {
+                MinskValue::Integer(!operand.as_integer().unwrap())
+            }
         }
     }
 
@@ -166,6 +170,27 @@ impl<'compilation> Evaluator<'compilation> {
             }
             BoundBinaryOperatorKind::GreaterOrEquals => {
                 MinskValue::Boolean(left.as_integer().unwrap() >= right.as_integer().unwrap())
+            }
+            BoundBinaryOperatorKind::BitwiseAnd => {
+                if b.kind() == MinskType::Integer {
+                    MinskValue::Integer(left.as_integer().unwrap() & right.as_integer().unwrap())
+                } else {
+                    MinskValue::Boolean(left.as_boolean().unwrap() & right.as_boolean().unwrap())
+                }
+            }
+            BoundBinaryOperatorKind::BitwiseOr => {
+                if b.kind() == MinskType::Integer {
+                    MinskValue::Integer(left.as_integer().unwrap() | right.as_integer().unwrap())
+                } else {
+                    MinskValue::Boolean(left.as_boolean().unwrap() | right.as_boolean().unwrap())
+                }
+            }
+            BoundBinaryOperatorKind::BitwiseXor => {
+                if b.kind() == MinskType::Integer {
+                    MinskValue::Integer(left.as_integer().unwrap() ^ right.as_integer().unwrap())
+                } else {
+                    MinskValue::Boolean(left.as_boolean().unwrap() ^ right.as_boolean().unwrap())
+                }
             }
         }
     }
@@ -477,6 +502,7 @@ mod tests {
             ("1", MinskValue::Integer(1)),
             ("+1", MinskValue::Integer(1)),
             ("-1", MinskValue::Integer(-1)),
+            ("~1", MinskValue::Integer(-2)),
             ("14 + 12", MinskValue::Integer(26)),
             ("12 - 3", MinskValue::Integer(9)),
             ("4 * 2", MinskValue::Integer(8)),
@@ -496,15 +522,36 @@ mod tests {
             ("3 >= 3", MinskValue::Boolean(true)),
             ("3 >= 4", MinskValue::Boolean(false)),
             ("3 >= 2", MinskValue::Boolean(true)),
+            ("1 | 2", MinskValue::Integer(3)),
+            ("1 & 2", MinskValue::Integer(0)),
+            ("1 | 0", MinskValue::Integer(1)),
+            ("1 & 3", MinskValue::Integer(1)),
+            ("1 ^ 0", MinskValue::Integer(1)),
+            ("0 ^ 1", MinskValue::Integer(1)),
+            ("1 ^ 3", MinskValue::Integer(2)),
             ("true == false", MinskValue::Boolean(false)),
             ("true == true", MinskValue::Boolean(true)),
             ("false == false", MinskValue::Boolean(true)),
             ("true != false", MinskValue::Boolean(true)),
             ("false != false", MinskValue::Boolean(false)),
+            ("true && false", MinskValue::Boolean(false)),
+            ("true || false", MinskValue::Boolean(true)),
+            ("true && true", MinskValue::Boolean(true)),
+            ("false || false", MinskValue::Boolean(false)),
+            ("true & false", MinskValue::Boolean(false)),
+            ("true | false", MinskValue::Boolean(true)),
+            ("true & true", MinskValue::Boolean(true)),
+            ("false | false", MinskValue::Boolean(false)),
+            ("false ^ false", MinskValue::Boolean(false)),
+            ("true ^ false", MinskValue::Boolean(true)),
+            ("false ^ true", MinskValue::Boolean(true)),
+            ("true ^ true", MinskValue::Boolean(false)),
             ("true", MinskValue::Boolean(true)),
             ("false", MinskValue::Boolean(false)),
             ("!true", MinskValue::Boolean(false)),
             ("!false", MinskValue::Boolean(true)),
+            ("var a = 10", MinskValue::Integer(10)),
+            ("{ var a = 10 (a * a) }", MinskValue::Integer(100)),
             ("{ var a = 0 (a = 10) * a }", MinskValue::Integer(100)),
             ("{ var a = 0 if a == 0 a = 10 a }", MinskValue::Integer(10)),
             ("{ var a = 0 if a != 0 a = 10 a }", MinskValue::Integer(0)),

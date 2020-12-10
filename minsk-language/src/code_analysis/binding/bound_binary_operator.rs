@@ -35,7 +35,7 @@ impl BoundBinaryOperator {
             result_type,
         }
     }
-    pub(super) const fn operators() -> [BoundBinaryOperator; 14] {
+    pub(super) const fn operators() -> [BoundBinaryOperator; 20] {
         [
             BoundBinaryOperator::new(
                 SyntaxKind::Plus,
@@ -55,6 +55,21 @@ impl BoundBinaryOperator {
             BoundBinaryOperator::new(
                 SyntaxKind::Slash,
                 BoundBinaryOperatorKind::Division,
+                MinskType::Integer,
+            ),
+            BoundBinaryOperator::new(
+                SyntaxKind::Ampersand,
+                BoundBinaryOperatorKind::BitwiseAnd,
+                MinskType::Integer,
+            ),
+            BoundBinaryOperator::new(
+                SyntaxKind::Pipe,
+                BoundBinaryOperatorKind::BitwiseOr,
+                MinskType::Integer,
+            ),
+            BoundBinaryOperator::new(
+                SyntaxKind::Hat,
+                BoundBinaryOperatorKind::BitwiseXor,
                 MinskType::Integer,
             ),
             BoundBinaryOperator::new_with_result_type(
@@ -106,13 +121,28 @@ impl BoundBinaryOperator {
                 MinskType::Boolean,
             ),
             BoundBinaryOperator::new(
+                SyntaxKind::Ampersand,
+                BoundBinaryOperatorKind::BitwiseAnd,
+                MinskType::Boolean,
+            ),
+            BoundBinaryOperator::new(
                 SyntaxKind::AmpersandAmpersand,
                 BoundBinaryOperatorKind::LogicalAnd,
                 MinskType::Boolean,
             ),
             BoundBinaryOperator::new(
+                SyntaxKind::Pipe,
+                BoundBinaryOperatorKind::BitwiseOr,
+                MinskType::Boolean,
+            ),
+            BoundBinaryOperator::new(
                 SyntaxKind::PipePipe,
                 BoundBinaryOperatorKind::LogicalOr,
+                MinskType::Boolean,
+            ),
+            BoundBinaryOperator::new(
+                SyntaxKind::Hat,
+                BoundBinaryOperatorKind::BitwiseXor,
                 MinskType::Boolean,
             ),
         ]

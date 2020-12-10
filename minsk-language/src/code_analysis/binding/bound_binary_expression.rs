@@ -10,7 +10,7 @@ pub struct BoundBinaryExpression {
 }
 
 impl BoundBinaryExpression {
-    pub(super) fn kind(&self) -> MinskType {
+    pub(crate) fn kind(&self) -> MinskType {
         self.op.result_type
     }
 }

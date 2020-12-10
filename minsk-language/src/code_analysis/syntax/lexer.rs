@@ -83,6 +83,14 @@ impl Lexer {
                 self.kind = SyntaxKind::CloseBrace;
                 self.next();
             }
+            '~' => {
+                self.kind = SyntaxKind::Tilde;
+                self.next();
+            }
+            '^' => {
+                self.kind = SyntaxKind::Hat;
+                self.next();
+            }
             '!' => {
                 if self.lookahead() == '=' {
                     self.kind = SyntaxKind::BangEquals;
@@ -110,13 +118,23 @@ impl Lexer {
                     self.next();
                 }
             }
-            '&' if self.lookahead() == '&' => {
-                self.kind = SyntaxKind::AmpersandAmpersand;
-                self.position += 2;
+            '&' => {
+                if self.lookahead() == '&' {
+                    self.kind = SyntaxKind::AmpersandAmpersand;
+                    self.position += 2;
+                } else {
+                    self.kind = SyntaxKind::Ampersand;
+                    self.next();
+                }
             }
-            '|' if self.lookahead() == '|' => {
-                self.kind = SyntaxKind::PipePipe;
-                self.position += 2;
+            '|' => {
+                if self.lookahead() == '|' {
+                    self.kind = SyntaxKind::PipePipe;
+                    self.position += 2;
+                } else {
+                    self.kind = SyntaxKind::Pipe;
+                    self.next();
+                }
             }
             '=' => {
                 if self.lookahead() == '=' {
@@ -349,6 +367,10 @@ mod tests {
             || t1kind == SyntaxKind::Less && t2kind == SyntaxKind::EqualsEquals
             || t1kind == SyntaxKind::Greater && t2kind == SyntaxKind::Equals
             || t1kind == SyntaxKind::Greater && t2kind == SyntaxKind::EqualsEquals
+            || t1kind == SyntaxKind::Ampersand && t2kind == SyntaxKind::Ampersand
+            || t1kind == SyntaxKind::Ampersand && t2kind == SyntaxKind::AmpersandAmpersand
+            || t1kind == SyntaxKind::Pipe && t2kind == SyntaxKind::Pipe
+            || t1kind == SyntaxKind::Pipe && t2kind == SyntaxKind::PipePipe
     }
 
     #[test]

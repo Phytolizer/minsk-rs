@@ -23,7 +23,7 @@ impl BoundUnaryOperator {
 }
 
 impl BoundUnaryOperator {
-    pub(super) const fn operators() -> [BoundUnaryOperator; 3] {
+    pub(super) const fn operators() -> [BoundUnaryOperator; 4] {
         [
             BoundUnaryOperator::new(
                 SyntaxKind::Bang,
@@ -38,6 +38,11 @@ impl BoundUnaryOperator {
             BoundUnaryOperator::new(
                 SyntaxKind::Minus,
                 BoundUnaryOperatorKind::Negation,
+                MinskType::Integer,
+            ),
+            BoundUnaryOperator::new(
+                SyntaxKind::Tilde,
+                BoundUnaryOperatorKind::OnesComplement,
                 MinskType::Integer,
             ),
         ]
