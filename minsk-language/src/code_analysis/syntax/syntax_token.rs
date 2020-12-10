@@ -6,7 +6,7 @@ use super::super::minsk_value::MinskValue;
 
 use super::syntax_kind::SyntaxKind;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct SyntaxToken {
     pub(crate) kind: SyntaxKind,
     pub(crate) position: usize,
@@ -42,11 +42,5 @@ impl Display for SyntaxToken {
             write!(f, " {}", literal)?;
         }
         Ok(())
-    }
-}
-
-impl PartialEq for SyntaxToken {
-    fn eq(&self, other: &Self) -> bool {
-        self.text == other.text && self.kind == other.kind
     }
 }

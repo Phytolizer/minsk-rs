@@ -267,6 +267,13 @@ impl Binder {
 
     fn bind_name_expression(&mut self, syntax: &NameExpressionSyntax) -> BoundExpression {
         let name = &syntax.identifier_token.text;
+        if name == "" {
+            // the token was inserted by the parser.
+            // an error was already reported, so return an error expression
+            return BoundExpression::Literal(BoundLiteralExpression {
+                value: MinskValue::Integer(0),
+            });
+        }
         let variable = self.scope.read().try_lookup(&name);
         if let Some(variable) = variable {
             BoundExpression::Variable(BoundVariableExpression { variable })

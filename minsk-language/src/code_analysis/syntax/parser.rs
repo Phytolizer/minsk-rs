@@ -165,8 +165,20 @@ impl Parser {
         while self.current().kind != SyntaxKind::EndOfFile
             && self.current().kind != SyntaxKind::CloseBrace
         {
+            let start_token = self.current();
+
             let statement = self.parse_statement();
             statements.push(statement);
+
+            // if parse_statement didn't consume any tokens,
+            // skip the current token and continue.
+            // this avoids an infinite loop.
+            //
+            // do not need to report an error because
+            // there's already an error trying to parse an expression statement
+            if self.peek(0) == &start_token {
+                self.next_token();
+            }
         }
 
         let close_brace_token = self.match_token(SyntaxKind::CloseBrace);
@@ -331,7 +343,7 @@ mod tests {
                             right: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
                                 identifier_token: SyntaxToken::new(
                                     SyntaxKind::Identifier,
-                                    3,
+                                    2 + op2_text.len(),
                                     String::from("b"),
                                     None,
                                 ),
@@ -369,7 +381,7 @@ mod tests {
                                 right: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
                                     identifier_token: SyntaxToken::new(
                                         SyntaxKind::Identifier,
-                                        3,
+                                        2 + op2_text.len(),
                                         String::from("b"),
                                         None,
                                     ),
@@ -413,17 +425,22 @@ mod tests {
                                 right: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
                                     identifier_token: SyntaxToken::new(
                                         SyntaxKind::Identifier,
-                                        2,
+                                        1 + op1_text.len(),
                                         String::from("b"),
                                         None,
                                     ),
                                 })),
                             })),
-                            operator_token: SyntaxToken::new(op2, 3, String::from(op2_text), None),
+                            operator_token: SyntaxToken::new(
+                                op2,
+                                2 + op1_text.len(),
+                                String::from(op2_text),
+                                None,
+                            ),
                             right: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
                                 identifier_token: SyntaxToken::new(
                                     SyntaxKind::Identifier,
-                                    4,
+                                    2 + op1_text.len() + op2_text.len(),
                                     String::from("c"),
                                     None,
                                 ),
@@ -450,21 +467,21 @@ mod tests {
                                 left: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
                                     identifier_token: SyntaxToken::new(
                                         SyntaxKind::Identifier,
-                                        2,
+                                        1 + op1_text.len(),
                                         String::from("b"),
                                         None,
                                     ),
                                 })),
                                 operator_token: SyntaxToken::new(
                                     op2,
-                                    3,
+                                    2 + op1_text.len(),
                                     String::from(op2_text),
                                     None,
                                 ),
                                 right: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
                                     identifier_token: SyntaxToken::new(
                                         SyntaxKind::Identifier,
-                                        4,
+                                        2 + op1_text.len() + op2_text.len(),
                                         String::from("c"),
                                         None,
                                     ),

@@ -290,6 +290,15 @@ mod tests {
     }
 
     #[test]
+    fn name_expression_does_not_report_empty_token() {
+        let text = "[]";
+        let diagnostics = "
+            Unexpected token <EndOfFile>, expected <Identifier>
+        ";
+        assert_has_diagnostics(text, diagnostics);
+    }
+
+    #[test]
     fn bad_unary_operator_is_reported() {
         let text = "[-]true";
         let diagnostics = "
@@ -408,8 +417,8 @@ mod tests {
             panic!("mismatch between span count and diagnostic count");
         }
         asserting!("same number of diagnostics")
-            .that(&expected_diagnostics.len())
-            .is_equal_to(&result.len());
+            .that(&result.len())
+            .is_equal_to(&expected_diagnostics.len());
         for (i, (diagnostic, span)) in expected_diagnostics
             .iter()
             .zip(annotated_text.spans)
@@ -447,6 +456,19 @@ mod tests {
             .that(&actual)
             .is_ok()
             .is_equal_to(&expected);
+    }
+
+    #[test]
+    fn block_statement_no_infinite_loops() {
+        let text = "
+            {
+            [)][]
+            ";
+        let diagnostics = "
+            Unexpected token <CloseParenthesis>, expected <Identifier>
+            Unexpected token <EndOfFile>, expected <CloseBrace>
+        ";
+        assert_has_diagnostics(text, diagnostics);
     }
 
     #[test]
