@@ -3,11 +3,17 @@ use unary_expression_syntax::UnaryExpressionSyntax;
 use crate::code_analysis::{diagnostic_bag::DiagnosticBag, text::source_text::SourceText};
 
 use super::{
-    super::minsk_value::MinskValue, assignment_expression_syntax::AssignmentExpressionSyntax,
-    block_statement_syntax::BlockStatementSyntax, compilation_unit::CompilationUnit,
+    super::minsk_value::MinskValue,
+    assignment_expression_syntax::AssignmentExpressionSyntax,
+    block_statement_syntax::BlockStatementSyntax,
+    compilation_unit::CompilationUnit,
     expression_statement_syntax::ExpressionStatementSyntax,
-    name_expression_syntax::NameExpressionSyntax, statement_syntax::StatementSyntax,
+    for_statement_syntax::ForStatementSyntax,
+    if_statement_syntax::{ElseClauseSyntax, IfStatementSyntax},
+    name_expression_syntax::NameExpressionSyntax,
+    statement_syntax::StatementSyntax,
     variable_declaration_syntax::VariableDeclarationSyntax,
+    while_statement_syntax::WhileStatementSyntax,
 };
 
 use super::{
@@ -83,15 +89,60 @@ impl Parser {
     }
 
     fn parse_statement(&mut self) -> StatementSyntax {
-        if self.current().kind == SyntaxKind::OpenBrace {
-            StatementSyntax::Block(self.parse_block_statement())
-        } else if self.current().kind == SyntaxKind::LetKeyword
-            || self.current().kind == SyntaxKind::VarKeyword
-        {
-            StatementSyntax::VariableDeclaration(self.parse_variable_declaration())
-        } else {
-            StatementSyntax::Expression(self.parse_expression_statement())
+        match self.current().kind {
+            SyntaxKind::OpenBrace => StatementSyntax::Block(self.parse_block_statement()),
+            SyntaxKind::LetKeyword | SyntaxKind::VarKeyword => {
+                StatementSyntax::VariableDeclaration(self.parse_variable_declaration())
+            }
+            SyntaxKind::ForKeyword => StatementSyntax::For(self.parse_for_statement()),
+            SyntaxKind::IfKeyword => StatementSyntax::If(self.parse_if_statement()),
+            SyntaxKind::WhileKeyword => StatementSyntax::While(self.parse_while_statement()),
+            _ => StatementSyntax::Expression(self.parse_expression_statement()),
         }
+    }
+
+    fn parse_for_statement(&mut self) -> ForStatementSyntax {
+        let keyword = self.match_token(SyntaxKind::ForKeyword);
+        let identifier = self.match_token(SyntaxKind::Identifier);
+        let equals_token = self.match_token(SyntaxKind::Equals);
+        let lower_bound = self.parse_expression();
+        let to_token = self.match_token(SyntaxKind::ToKeyword);
+        let upper_bound = self.parse_expression();
+        let body = self.parse_statement();
+        ForStatementSyntax::new(
+            keyword,
+            identifier,
+            equals_token,
+            Box::new(lower_bound),
+            to_token,
+            Box::new(upper_bound),
+            Box::new(body),
+        )
+    }
+
+    fn parse_while_statement(&mut self) -> WhileStatementSyntax {
+        let keyword = self.match_token(SyntaxKind::WhileKeyword);
+        let condition = self.parse_expression();
+        let body = self.parse_statement();
+        WhileStatementSyntax::new(keyword, condition, Box::new(body))
+    }
+
+    fn parse_if_statement(&mut self) -> IfStatementSyntax {
+        let keyword = self.match_token(SyntaxKind::IfKeyword);
+        let condition = self.parse_expression();
+        let statement = self.parse_statement();
+        let else_clause = self.parse_optional_else_clause();
+        IfStatementSyntax::new(keyword, condition, Box::new(statement), else_clause)
+    }
+
+    fn parse_optional_else_clause(&mut self) -> Option<ElseClauseSyntax> {
+        if self.current().kind != SyntaxKind::ElseKeyword {
+            return None;
+        }
+
+        let keyword = self.next_token();
+        let statement = self.parse_statement();
+        Some(ElseClauseSyntax::new(keyword, Box::new(statement)))
     }
 
     fn parse_variable_declaration(&mut self) -> VariableDeclarationSyntax {
@@ -114,8 +165,20 @@ impl Parser {
         while self.current().kind != SyntaxKind::EndOfFile
             && self.current().kind != SyntaxKind::CloseBrace
         {
+            let start_token = self.current();
+
             let statement = self.parse_statement();
             statements.push(statement);
+
+            // if parse_statement didn't consume any tokens,
+            // skip the current token and continue.
+            // this avoids an infinite loop.
+            //
+            // do not need to report an error because
+            // there's already an error trying to parse an expression statement
+            if self.peek(0) == &start_token {
+                self.next_token();
+            }
         }
 
         let close_brace_token = self.match_token(SyntaxKind::CloseBrace);
@@ -280,7 +343,7 @@ mod tests {
                             right: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
                                 identifier_token: SyntaxToken::new(
                                     SyntaxKind::Identifier,
-                                    3,
+                                    2 + op2_text.len(),
                                     String::from("b"),
                                     None,
                                 ),
@@ -318,7 +381,7 @@ mod tests {
                                 right: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
                                     identifier_token: SyntaxToken::new(
                                         SyntaxKind::Identifier,
-                                        3,
+                                        2 + op2_text.len(),
                                         String::from("b"),
                                         None,
                                     ),
@@ -362,17 +425,22 @@ mod tests {
                                 right: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
                                     identifier_token: SyntaxToken::new(
                                         SyntaxKind::Identifier,
-                                        2,
+                                        1 + op1_text.len(),
                                         String::from("b"),
                                         None,
                                     ),
                                 })),
                             })),
-                            operator_token: SyntaxToken::new(op2, 3, String::from(op2_text), None),
+                            operator_token: SyntaxToken::new(
+                                op2,
+                                2 + op1_text.len(),
+                                String::from(op2_text),
+                                None,
+                            ),
                             right: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
                                 identifier_token: SyntaxToken::new(
                                     SyntaxKind::Identifier,
-                                    4,
+                                    2 + op1_text.len() + op2_text.len(),
                                     String::from("c"),
                                     None,
                                 ),
@@ -399,21 +467,21 @@ mod tests {
                                 left: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
                                     identifier_token: SyntaxToken::new(
                                         SyntaxKind::Identifier,
-                                        2,
+                                        1 + op1_text.len(),
                                         String::from("b"),
                                         None,
                                     ),
                                 })),
                                 operator_token: SyntaxToken::new(
                                     op2,
-                                    3,
+                                    2 + op1_text.len(),
                                     String::from(op2_text),
                                     None,
                                 ),
                                 right: Box::new(ExpressionSyntax::Name(NameExpressionSyntax {
                                     identifier_token: SyntaxToken::new(
                                         SyntaxKind::Identifier,
-                                        4,
+                                        2 + op1_text.len() + op2_text.len(),
                                         String::from("c"),
                                         None,
                                     ),

@@ -7,15 +7,18 @@ use crate::{
     code_analysis::{
         diagnostic::Diagnostic,
         diagnostic_bag::DiagnosticBag,
+        minsk_type::MinskType,
         minsk_value::MinskValue,
         syntax::assignment_expression_syntax::AssignmentExpressionSyntax,
         syntax::{
             binary_expression_syntax::BinaryExpressionSyntax,
             block_statement_syntax::BlockStatementSyntax, compilation_unit::CompilationUnit,
             expression_statement_syntax::ExpressionStatementSyntax,
+            for_statement_syntax::ForStatementSyntax, if_statement_syntax::IfStatementSyntax,
             name_expression_syntax::NameExpressionSyntax, statement_syntax::StatementSyntax,
             syntax_kind::SyntaxKind, unary_expression_syntax::UnaryExpressionSyntax,
             variable_declaration_syntax::VariableDeclarationSyntax,
+            while_statement_syntax::WhileStatementSyntax,
         },
         variable_symbol::VariableSymbol,
     },
@@ -26,11 +29,12 @@ use super::{
     bound_assignment_expression::BoundAssignmentExpression,
     bound_binary_expression::BoundBinaryExpression, bound_binary_operator::BoundBinaryOperator,
     bound_block_statement::BoundBlockStatement, bound_expression::BoundExpression,
-    bound_expression_statement::BoundExpressionStatement, bound_global_scope::BoundGlobalScope,
+    bound_expression_statement::BoundExpressionStatement, bound_for_statement::BoundForStatement,
+    bound_global_scope::BoundGlobalScope, bound_if_statement::BoundIfStatement,
     bound_literal_expression::BoundLiteralExpression, bound_scope::BoundScope,
     bound_statement::BoundStatement, bound_unary_expression::BoundUnaryExpression,
     bound_unary_operator::BoundUnaryOperator, bound_variable_declaration::BoundVariableDeclaration,
-    bound_variable_expression::BoundVariableExpression,
+    bound_variable_expression::BoundVariableExpression, bound_while_statement::BoundWhileStatement,
 };
 
 pub struct Binder {
@@ -99,8 +103,56 @@ impl Binder {
         match syntax {
             StatementSyntax::Block(b) => self.bind_block_statement(b),
             StatementSyntax::Expression(e) => self.bind_expression_statement(e),
+            StatementSyntax::If(i) => self.bind_if_statement(i),
             StatementSyntax::VariableDeclaration(v) => self.bind_variable_declaration(v),
+            StatementSyntax::While(w) => self.bind_while_statement(w),
+            StatementSyntax::For(f) => self.bind_for_statement(f),
         }
+    }
+
+    fn bind_for_statement(&mut self, syntax: &ForStatementSyntax) -> BoundStatement {
+        let lower_bound = self.bind_expression_with_type(syntax.lower_bound(), MinskType::Integer);
+        let upper_bound = self.bind_expression_with_type(syntax.upper_bound(), MinskType::Integer);
+
+        self.scope = Arc::new(RwLock::new(BoundScope::new(Some(self.scope.clone()))));
+
+        let name = syntax.identifier().text.clone();
+        let variable = VariableSymbol::new(name.clone(), true, MinskType::Integer);
+        if !self.scope.write().try_declare(variable.clone()) {
+            self.diagnostics
+                .report_variable_already_declared(syntax.identifier().span, &name);
+        }
+
+        let body = self.bind_statement(syntax.body());
+
+        let parent = self.scope.read().parent().unwrap();
+        self.scope = parent;
+
+        BoundStatement::For(BoundForStatement::new(
+            variable,
+            lower_bound,
+            upper_bound,
+            Box::new(body),
+        ))
+    }
+
+    fn bind_while_statement(&mut self, syntax: &WhileStatementSyntax) -> BoundStatement {
+        let condition = self.bind_expression_with_type(syntax.condition(), MinskType::Boolean);
+        let body = self.bind_statement(syntax.body());
+        BoundStatement::While(BoundWhileStatement::new(condition, Box::new(body)))
+    }
+
+    fn bind_if_statement(&mut self, syntax: &IfStatementSyntax) -> BoundStatement {
+        let condition = self.bind_expression_with_type(syntax.condition(), MinskType::Boolean);
+        let then_statement = self.bind_statement(syntax.then_statement());
+        let else_statement = syntax
+            .else_statement()
+            .map(|e| self.bind_statement(e.else_statement()));
+        BoundStatement::If(BoundIfStatement::new(
+            condition,
+            Box::new(then_statement),
+            else_statement.map(Box::new),
+        ))
     }
 
     fn bind_variable_declaration(&mut self, syntax: &VariableDeclarationSyntax) -> BoundStatement {
@@ -133,6 +185,19 @@ impl Binder {
     fn bind_expression_statement(&mut self, syntax: &ExpressionStatementSyntax) -> BoundStatement {
         let expression = self.bind_expression(syntax.expression());
         BoundStatement::Expression(BoundExpressionStatement::new(expression))
+    }
+
+    fn bind_expression_with_type(
+        &mut self,
+        syntax: &ExpressionSyntax,
+        ty: MinskType,
+    ) -> BoundExpression {
+        let result = self.bind_expression(syntax);
+        if result.ty() != ty {
+            self.diagnostics
+                .report_cannot_convert(syntax.span(), result.ty(), ty);
+        }
+        result
     }
 
     fn bind_expression(&mut self, syntax: &ExpressionSyntax) -> BoundExpression {
@@ -202,6 +267,13 @@ impl Binder {
 
     fn bind_name_expression(&mut self, syntax: &NameExpressionSyntax) -> BoundExpression {
         let name = &syntax.identifier_token.text;
+        if name == "" {
+            // the token was inserted by the parser.
+            // an error was already reported, so return an error expression
+            return BoundExpression::Literal(BoundLiteralExpression {
+                value: MinskValue::Integer(0),
+            });
+        }
         let variable = self.scope.read().try_lookup(&name);
         if let Some(variable) = variable {
             BoundExpression::Variable(BoundVariableExpression { variable })

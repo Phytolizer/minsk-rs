@@ -4,10 +4,12 @@ use super::{
     binding::{
         bound_assignment_expression::BoundAssignmentExpression,
         bound_binary_expression::BoundBinaryExpression, bound_block_statement::BoundBlockStatement,
-        bound_expression_statement::BoundExpressionStatement, bound_statement::BoundStatement,
-        bound_unary_expression::BoundUnaryExpression,
+        bound_expression_statement::BoundExpressionStatement,
+        bound_for_statement::BoundForStatement, bound_if_statement::BoundIfStatement,
+        bound_statement::BoundStatement, bound_unary_expression::BoundUnaryExpression,
         bound_variable_declaration::BoundVariableDeclaration,
         bound_variable_expression::BoundVariableExpression,
+        bound_while_statement::BoundWhileStatement,
     },
     minsk_value::MinskValue,
     variable_symbol::VariableSymbol,
@@ -41,7 +43,42 @@ impl<'compilation> Evaluator<'compilation> {
         match statement {
             BoundStatement::Block(b) => self.evaluate_block_statement(b),
             BoundStatement::Expression(e) => self.evaluate_expression_statement(e),
+            BoundStatement::For(f) => self.evaluate_for_statement(f),
+            BoundStatement::If(i) => self.evaluate_if_statement(i),
             BoundStatement::VariableDeclaration(v) => self.evaluate_variable_declaration(v),
+            BoundStatement::While(w) => self.evaluate_while_statement(w),
+        }
+    }
+
+    fn evaluate_for_statement(&mut self, f: &BoundForStatement) {
+        let lower_bound = self.evaluate_expression(f.lower_bound());
+        let upper_bound = self.evaluate_expression(f.upper_bound());
+        self.variables
+            .insert(f.variable().clone(), lower_bound.clone());
+
+        for i in lower_bound.as_integer().unwrap()..=upper_bound.as_integer().unwrap() {
+            self.variables
+                .insert(f.variable().clone(), MinskValue::Integer(i));
+            self.evaluate_statement(f.body());
+        }
+    }
+
+    fn evaluate_while_statement(&mut self, w: &BoundWhileStatement) {
+        while self
+            .evaluate_expression(w.condition())
+            .as_boolean()
+            .unwrap()
+        {
+            self.evaluate_statement(w.body());
+        }
+    }
+
+    fn evaluate_if_statement(&mut self, i: &BoundIfStatement) {
+        let condition = self.evaluate_expression(i.condition());
+        if condition.as_boolean().unwrap() {
+            self.evaluate_statement(i.then_statement());
+        } else if let Some(e) = i.else_statement() {
+            self.evaluate_statement(e);
         }
     }
 
@@ -118,6 +155,18 @@ impl<'compilation> Evaluator<'compilation> {
             BoundBinaryOperatorKind::LogicalOr => {
                 MinskValue::Boolean(left.as_boolean().unwrap() || right.as_boolean().unwrap())
             }
+            BoundBinaryOperatorKind::LessThan => {
+                MinskValue::Boolean(left.as_integer().unwrap() < right.as_integer().unwrap())
+            }
+            BoundBinaryOperatorKind::LessOrEquals => {
+                MinskValue::Boolean(left.as_integer().unwrap() <= right.as_integer().unwrap())
+            }
+            BoundBinaryOperatorKind::GreaterThan => {
+                MinskValue::Boolean(left.as_integer().unwrap() > right.as_integer().unwrap())
+            }
+            BoundBinaryOperatorKind::GreaterOrEquals => {
+                MinskValue::Boolean(left.as_integer().unwrap() >= right.as_integer().unwrap())
+            }
         }
     }
 
@@ -134,10 +183,268 @@ impl<'compilation> Evaluator<'compilation> {
 
 #[cfg(test)]
 mod tests {
-    use crate::code_analysis::{compilation::Compilation, syntax::syntax_tree::SyntaxTree};
+    use std::io::{BufRead, BufReader};
+
+    use crate::code_analysis::{
+        compilation::Compilation, syntax::syntax_tree::SyntaxTree, text::text_span::TextSpan,
+    };
 
     use super::*;
     use spectral::prelude::*;
+
+    #[derive(Debug)]
+    struct AnnotatedText {
+        text: String,
+        spans: Vec<TextSpan>,
+    }
+
+    impl AnnotatedText {
+        fn indentation(s: &str) -> usize {
+            s.chars()
+                .enumerate()
+                .find_map(|(i, c)| if !c.is_whitespace() { Some(i) } else { None })
+                // unwrap b/c we filtered whitespace-only lines
+                .unwrap()
+        }
+
+        fn dedent(text: &str) -> Vec<String> {
+            let lines = BufReader::new(text.as_bytes())
+                .lines()
+                .map(|line| line.unwrap())
+                .filter(|line| !line.trim().is_empty())
+                .collect::<Vec<_>>();
+            let min_indentation = lines
+                .iter()
+                .min_by(|&a, &b| Self::indentation(a).cmp(&Self::indentation(b)))
+                .map(|line| Self::indentation(line))
+                // unwrap because we reject whitespace-only input
+                .unwrap();
+            let lines = lines
+                .iter()
+                .map(|line| line.chars().skip(min_indentation).collect::<String>())
+                .collect::<Vec<_>>();
+            lines
+        }
+        fn parse(text: &str) -> Self {
+            let text = Self::dedent(text);
+            let mut spans = Vec::<TextSpan>::new();
+            let mut start_positions = Vec::<usize>::new();
+
+            let mut position = 0;
+            let text = text
+                .join("\n")
+                .chars()
+                .filter(|&c| {
+                    if c == '[' {
+                        start_positions.push(position);
+                        false
+                    } else if c == ']' {
+                        if start_positions.is_empty() {
+                            panic!("unmatched ']'");
+                        }
+                        let start = start_positions.pop().unwrap();
+                        let end = position;
+                        let span = TextSpan { start, end };
+                        spans.push(span);
+                        false
+                    } else {
+                        position += 1;
+                        true
+                    }
+                })
+                .collect();
+            if !start_positions.is_empty() {
+                panic!("unmatched '['");
+            }
+            AnnotatedText { text, spans }
+        }
+    }
+
+    #[test]
+    fn variable_declaration_reports_redeclaration() {
+        let text = "
+            {
+                var x = 10
+                var y = 100
+                {
+                    var x = 10
+                }
+                var [x] = 5
+            }
+            ";
+        let diagnostics = "
+            Variable 'x' has already been declared
+            ";
+
+        assert_has_diagnostics(text, diagnostics);
+    }
+
+    #[test]
+    fn name_expression_reports_undefined() {
+        let text = "[x] * 10";
+        let diagnostics = "
+            Variable 'x' doesn't exist
+            ";
+
+        assert_has_diagnostics(text, diagnostics);
+    }
+
+    #[test]
+    fn name_expression_does_not_report_empty_token() {
+        let text = "[]";
+        let diagnostics = "
+            Unexpected token <EndOfFile>, expected <Identifier>
+        ";
+        assert_has_diagnostics(text, diagnostics);
+    }
+
+    #[test]
+    fn bad_unary_operator_is_reported() {
+        let text = "[-]true";
+        let diagnostics = "
+            Unary operator '-' is not defined for type Boolean
+        ";
+        assert_has_diagnostics(text, diagnostics);
+    }
+
+    #[test]
+    fn bad_binary_operator_is_reported() {
+        let text = "3 [&&] 7";
+        let diagnostics = "
+            Binary operator '&&' is not defined for types Integer and Integer
+            ";
+        assert_has_diagnostics(text, diagnostics);
+    }
+
+    #[test]
+    fn cannot_assign_let_binding() {
+        let text = "
+            {
+                let x = 5
+                x [=] 4
+            }
+            ";
+        let diagnostics = "
+            Variable 'x' is immutable and cannot be assigned to
+        ";
+        assert_has_diagnostics(text, diagnostics);
+    }
+
+    #[test]
+    fn cannot_convert_bool_to_int() {
+        let text = "
+            {
+                var x = 10
+                x = [true]
+            }
+        ";
+        let diagnostics = "
+            Cannot convert Boolean to Integer
+        ";
+        assert_has_diagnostics(text, diagnostics);
+    }
+
+    #[test]
+    fn if_statement_reports_cannot_convert() {
+        let text = "
+            {
+                var x = 0
+                if [10]
+                    x = 10
+            }
+            ";
+        let diagnostics = "
+            Cannot convert Integer to Boolean
+            ";
+        assert_has_diagnostics(text, diagnostics);
+    }
+
+    #[test]
+    fn while_statement_reports_cannot_convert() {
+        let text = "
+            {
+                var x = 0
+                while [10]
+                    x = 10
+            }
+            ";
+        let diagnostics = "
+            Cannot convert Integer to Boolean
+            ";
+        assert_has_diagnostics(text, diagnostics);
+    }
+
+    #[test]
+    fn for_statement_reports_cannot_convert_lower_bound() {
+        let text = "
+            {
+                var x = 0
+                for i = [false] to 10
+                    x = x + 10
+            }
+            ";
+        let diagnostics = "
+            Cannot convert Boolean to Integer
+            ";
+        assert_has_diagnostics(text, diagnostics);
+    }
+
+    #[test]
+    fn for_statement_reports_cannot_convert_upper_bound() {
+        let text = "
+            {
+                var x = 0
+                for i = 1 to [true]
+                    x = x + 10
+            }
+            ";
+        let diagnostics = "
+            Cannot convert Boolean to Integer
+            ";
+        assert_has_diagnostics(text, diagnostics);
+    }
+
+    fn assert_has_diagnostics(text: &str, diagnostics: &str) {
+        let annotated_text = AnnotatedText::parse(text);
+        let syntax_tree = SyntaxTree::parse(annotated_text.text.clone());
+        let mut compilation = Compilation::new(syntax_tree);
+        let result = compilation.evaluate(&mut HashMap::new());
+        let expected_diagnostics = AnnotatedText::dedent(diagnostics);
+        asserting!("result is error").that(&result).is_err();
+        let result = result.unwrap_err();
+
+        if annotated_text.spans.len() != expected_diagnostics.len() {
+            panic!("mismatch between span count and diagnostic count");
+        }
+        asserting!("same number of diagnostics")
+            .that(&result.len())
+            .is_equal_to(&expected_diagnostics.len());
+        for (i, (diagnostic, span)) in expected_diagnostics
+            .iter()
+            .zip(annotated_text.spans)
+            .enumerate()
+        {
+            let actual_span = result[i].span;
+            let actual_diagnostic = &result[i].message;
+            asserting!("messages match")
+                .that(actual_diagnostic)
+                .is_equal_to(diagnostic);
+            asserting!("spans match")
+                .that(&actual_span)
+                .is_equal_to(&span);
+        }
+    }
+
+    #[test]
+    fn annotated_text_dedents_correctly() {
+        let text = "
+            test
+            set
+            ";
+        asserting!("strips indentation")
+            .that(&AnnotatedText::dedent(text))
+            .is_equal_to(&vec!["test".to_string(), "set".to_string()]);
+    }
 
     fn try_evaluate(text: &str, expected: Option<MinskValue>) {
         let syntax_tree = SyntaxTree::parse(text.to_string());
@@ -149,6 +456,19 @@ mod tests {
             .that(&actual)
             .is_ok()
             .is_equal_to(&expected);
+    }
+
+    #[test]
+    fn block_statement_no_infinite_loops() {
+        let text = "
+            {
+            [)][]
+            ";
+        let diagnostics = "
+            Unexpected token <CloseParenthesis>, expected <Identifier>
+            Unexpected token <EndOfFile>, expected <CloseBrace>
+        ";
+        assert_has_diagnostics(text, diagnostics);
     }
 
     #[test]
@@ -166,6 +486,16 @@ mod tests {
             ("3 == 3", MinskValue::Boolean(true)),
             ("12 != 3", MinskValue::Boolean(true)),
             ("3 != 3", MinskValue::Boolean(false)),
+            ("3 < 4", MinskValue::Boolean(true)),
+            ("5 < 3", MinskValue::Boolean(false)),
+            ("3 <= 3", MinskValue::Boolean(true)),
+            ("3 <= 4", MinskValue::Boolean(true)),
+            ("3 <= 2", MinskValue::Boolean(false)),
+            ("4 > 3", MinskValue::Boolean(true)),
+            ("3 > 5", MinskValue::Boolean(false)),
+            ("3 >= 3", MinskValue::Boolean(true)),
+            ("3 >= 4", MinskValue::Boolean(false)),
+            ("3 >= 2", MinskValue::Boolean(true)),
             ("true == false", MinskValue::Boolean(false)),
             ("true == true", MinskValue::Boolean(true)),
             ("false == false", MinskValue::Boolean(true)),
@@ -176,6 +506,18 @@ mod tests {
             ("!true", MinskValue::Boolean(false)),
             ("!false", MinskValue::Boolean(true)),
             ("{ var a = 0 (a = 10) * a }", MinskValue::Integer(100)),
+            ("{ var a = 0 if a == 0 a = 10 a }", MinskValue::Integer(10)),
+            ("{ var a = 0 if a != 0 a = 10 a }", MinskValue::Integer(0)),
+            (
+                "{ var a = 0 if a == 0 a = 10 else a = 5 a }",
+                MinskValue::Integer(10),
+            ),
+            (
+                "{ var a = 0 if a != 0 a = 10 else a = 5 a }",
+                MinskValue::Integer(5),
+            ),
+            ("{ var i = 10 var result = 0 while i > 0 { result = result + i i = i - 1 } result }", MinskValue::Integer(55)),
+            ("{ var result = 0 for i = 1 to 10 { result = result + i } result }", MinskValue::Integer(55))
         ]
         .iter()
         {

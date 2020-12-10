@@ -20,6 +20,10 @@ pub(crate) enum SyntaxKind {
     Equals,
     EqualsEquals,
     BangEquals,
+    Less,
+    LessEquals,
+    Greater,
+    GreaterEquals,
 
     OpenParenthesis,
     CloseParenthesis,
@@ -31,6 +35,11 @@ pub(crate) enum SyntaxKind {
     TrueKeyword,
     LetKeyword,
     VarKeyword,
+    IfKeyword,
+    ElseKeyword,
+    WhileKeyword,
+    ForKeyword,
+    ToKeyword,
 }
 
 impl Display for SyntaxKind {

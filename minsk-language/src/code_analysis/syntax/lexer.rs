@@ -92,6 +92,24 @@ impl Lexer {
                     self.next();
                 }
             }
+            '<' => {
+                if self.lookahead() == '=' {
+                    self.kind = SyntaxKind::LessEquals;
+                    self.position += 2;
+                } else {
+                    self.kind = SyntaxKind::Less;
+                    self.next();
+                }
+            }
+            '>' => {
+                if self.lookahead() == '=' {
+                    self.kind = SyntaxKind::GreaterEquals;
+                    self.position += 2;
+                } else {
+                    self.kind = SyntaxKind::Greater;
+                    self.next();
+                }
+            }
             '&' if self.lookahead() == '&' => {
                 self.kind = SyntaxKind::AmpersandAmpersand;
                 self.position += 2;
@@ -205,6 +223,7 @@ mod tests {
     fn lex_token_pair(t1kind: SyntaxKind, t1text: &str, t2kind: SyntaxKind, t2text: &str) {
         let tokens = SyntaxTree::parse_tokens(String::new() + t1text + t2text);
 
+        println!("{}{} : {}, {}", t1text, t2text, t1kind, t2kind);
         asserting!("tokens length").that(&tokens).has_length(2);
         asserting!("token 1 kind")
             .that(&tokens[0].kind)
@@ -326,6 +345,10 @@ mod tests {
             || t1kind == SyntaxKind::Equals && t2kind == SyntaxKind::Equals
             || t1kind == SyntaxKind::Equals && t2kind == SyntaxKind::EqualsEquals
             || t1kind == SyntaxKind::Bang && t2kind == SyntaxKind::EqualsEquals
+            || t1kind == SyntaxKind::Less && t2kind == SyntaxKind::Equals
+            || t1kind == SyntaxKind::Less && t2kind == SyntaxKind::EqualsEquals
+            || t1kind == SyntaxKind::Greater && t2kind == SyntaxKind::Equals
+            || t1kind == SyntaxKind::Greater && t2kind == SyntaxKind::EqualsEquals
     }
 
     #[test]

@@ -8,4 +8,8 @@ pub(crate) enum BoundBinaryOperatorKind {
     LogicalOr,
     Equality,
     Inequality,
+    LessThan,
+    LessOrEquals,
+    GreaterThan,
+    GreaterOrEquals,
 }
