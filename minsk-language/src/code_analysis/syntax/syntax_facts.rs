@@ -43,6 +43,10 @@ impl SyntaxFacts {
             SyntaxKind::CloseParenthesis => Some(")"),
             SyntaxKind::OpenBrace => Some("{"),
             SyntaxKind::CloseBrace => Some("}"),
+            SyntaxKind::Ampersand => Some("&"),
+            SyntaxKind::Pipe => Some("|"),
+            SyntaxKind::Hat => Some("^"),
+            SyntaxKind::Tilde => Some("~"),
             SyntaxKind::FalseKeyword => Some("false"),
             SyntaxKind::TrueKeyword => Some("true"),
             SyntaxKind::LetKeyword => Some("let"),
@@ -68,15 +72,15 @@ impl SyntaxFactsExt for SyntaxKind {
             | SyntaxKind::LessEquals
             | SyntaxKind::Greater
             | SyntaxKind::GreaterEquals => 3,
-            SyntaxKind::PipePipe => 2,
-            SyntaxKind::AmpersandAmpersand => 1,
+            SyntaxKind::Hat | SyntaxKind::Pipe | SyntaxKind::PipePipe => 2,
+            SyntaxKind::Ampersand | SyntaxKind::AmpersandAmpersand => 1,
             _ => 0,
         }
     }
 
     fn unary_operator_precedence(&self) -> usize {
         match self {
-            SyntaxKind::Plus | SyntaxKind::Minus | SyntaxKind::Bang => 6,
+            SyntaxKind::Tilde | SyntaxKind::Plus | SyntaxKind::Minus | SyntaxKind::Bang => 6,
             _ => 0,
         }
     }
